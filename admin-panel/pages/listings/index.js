@@ -45,35 +45,39 @@ export default function ManageListings() {
 
     return (
         <AdminLayout>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1>My Listings</h1>
-                <Link href="/listings/create" className="btn btn-accent">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h1 className="text-2xl md:text-3xl font-bold">My Listings</h1>
+                <Link href="/listings/create" className="btn btn-accent no-underline w-full sm:w-auto text-center">
                     + Add New Listing
                 </Link>
             </div>
 
-            <div className="card" style={{ marginTop: '2rem' }}>
-                {listings.length === 0 ? <p>No listings found.</p> : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-                                <th style={{ padding: '1rem' }}>Title</th>
-                                <th style={{ padding: '1rem' }}>Type</th>
-                                <th style={{ padding: '1rem' }}>Price</th>
-                                <th style={{ padding: '1rem' }}>Location</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {listings.map(l => (
-                                <tr key={l.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                    <td style={{ padding: '1rem' }}>{l.title}</td>
-                                    <td style={{ padding: '1rem', textTransform: 'capitalize' }}>{l.type}</td>
-                                    <td style={{ padding: '1rem' }}>${l.price}</td>
-                                    <td style={{ padding: '1rem' }}>{l.location}</td>
+            <div className="card !p-0 overflow-hidden mt-8">
+                {listings.length === 0 ? (
+                    <p className="text-center py-12 text-secondary">No listings found.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse min-w-[600px]">
+                            <thead>
+                                <tr className="border-b-2 border-border text-left bg-slate-50 text-xs uppercase text-secondary">
+                                    <th className="p-4 font-semibold">Title</th>
+                                    <th className="p-4 font-semibold">Type</th>
+                                    <th className="p-4 font-semibold">Price</th>
+                                    <th className="p-4 font-semibold">Location</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {listings.map(l => (
+                                    <tr key={l.id} className="border-b border-border hover:bg-slate-50 transition-colors">
+                                        <td className="p-4 font-medium text-sm">{l.title}</td>
+                                        <td className="p-4 text-sm capitalize">{l.type}</td>
+                                        <td className="p-4 text-sm font-semibold">${l.price}</td>
+                                        <td className="p-4 text-sm text-secondary">{l.location}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
         </AdminLayout>

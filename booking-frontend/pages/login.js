@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+import Navbar from '../components/Navbar';
 
 const API_BASE = 'http://localhost:5000/api';
 
@@ -23,36 +24,59 @@ export default function Login() {
     };
 
     return (
-        <div className="container" style={{ maxWidth: '400px', marginTop: '5rem' }}>
-            <div className="card">
-                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Login</h2>
-                {error && <p style={{ color: 'red', marginBottom: '1rem', textAlign: 'center' }}>{error}</p>}
-                <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
-                        <input
-                            type="email"
-                            className="group input"
-                            style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
+        <>
+            <Navbar />
+            <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 bg-slate-50">
+                <div className="card w-full max-w-[400px] p-8 shadow-lg">
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold text-primary">Login</h2>
+                        <p className="text-secondary mt-2">Welcome back! Please enter your details.</p>
                     </div>
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem' }}>Password</label>
-                        <input
-                            type="password"
-                            className="group input"
-                            style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
+
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md text-sm mb-6 text-center">
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-semibold text-text">Email</label>
+                            <input
+                                type="email"
+                                className="w-full p-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                                placeholder="name@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex justify-between items-center">
+                                <label className="text-sm font-semibold text-text">Password</label>
+                                <a href="#" className="text-xs text-accent hover:underline">Forgot?</a>
+                            </div>
+                            <input
+                                type="password"
+                                className="w-full p-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-primary w-full py-3 mt-4 text-base font-bold">
+                            Sign In
+                        </button>
+                    </form>
+
+                    <div className="mt-8 pt-6 border-t border-border text-center">
+                        <p className="text-sm text-secondary">
+                            Don't have an account? <a href="#" className="text-accent font-semibold hover:underline">Sign up</a>
+                        </p>
                     </div>
-                    <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Login</button>
-                </form>
+                </div>
             </div>
-        </div>
+        </>
     );
 }

@@ -19,24 +19,22 @@ export default function Reports() {
 
     return (
         <AdminLayout>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h1>Analytics & Reports</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <h1 className="text-2xl md:text-3xl font-bold">Analytics & Reports</h1>
                 <button
                     onClick={handleGenerate}
-                    className="btn btn-accent"
-                    style={{ padding: '0.75rem 1.5rem' }}
+                    className="btn btn-accent px-6 py-2 w-full sm:w-auto"
                 >
                     Generate Report
                 </button>
             </div>
 
             {/* Filters Section */}
-            <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Report Type</label>
+            <div className="card p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold">Report Type</label>
                     <select
-                        className="btn"
-                        style={{ width: '100%', border: '1px solid var(--border)', background: 'white' }}
+                        className="w-full p-2.5 rounded-md border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
                         value={reportType}
                         onChange={(e) => setReportType(e.target.value)}
                     >
@@ -46,11 +44,10 @@ export default function Reports() {
                         <option value="inventory">Inventory Analysis</option>
                     </select>
                 </div>
-                <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Date Range</label>
+                <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold">Date Range</label>
                     <select
-                        className="btn"
-                        style={{ width: '100%', border: '1px solid var(--border)', background: 'white' }}
+                        className="w-full p-2.5 rounded-md border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value)}
                     >
@@ -60,9 +57,9 @@ export default function Reports() {
                         <option value="custom">Custom Range</option>
                     </select>
                 </div>
-                <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Export Format</label>
-                    <select className="btn" style={{ width: '100%', border: '1px solid var(--border)', background: 'white' }}>
+                <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-1">
+                    <label className="text-sm font-semibold">Export Format</label>
+                    <select className="w-full p-2.5 rounded-md border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent">
                         <option value="pdf">PDF Document</option>
                         <option value="csv">CSV Spreadsheet</option>
                         <option value="excel">Excel Worksheet</option>
@@ -71,60 +68,53 @@ export default function Reports() {
             </div>
 
             {/* Stats Overview */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
-                    <h3 style={{ color: 'var(--secondary)', fontSize: '0.875rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Total Sales</h3>
-                    <p style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>$12,450.00</p>
-                    <p style={{ color: '#10b981', fontSize: '0.875rem', marginTop: '0.5rem' }}>↑ 12% from last month</p>
-                </div>
-                <div className="card" style={{ borderLeft: '4px solid #f59e0b' }}>
-                    <h3 style={{ color: 'var(--secondary)', fontSize: '0.875rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Active Bookings</h3>
-                    <p style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>84</p>
-                    <p style={{ color: '#10b981', fontSize: '0.875rem', marginTop: '0.5rem' }}>↑ 5% increase</p>
-                </div>
-                <div className="card" style={{ borderLeft: '4px solid #ef4444' }}>
-                    <h3 style={{ color: 'var(--secondary)', fontSize: '0.875rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Avg. Order Value</h3>
-                    <p style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>$148.20</p>
-                    <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.5rem' }}>Steady growth</p>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {[
+                    { label: 'Total Sales', value: '$12,450.00', change: '↑ 12%', color: 'border-accent', text: 'text-green-600' },
+                    { label: 'Active Bookings', value: '84', change: '↑ 5%', color: 'border-amber-500', text: 'text-green-600' },
+                    { label: 'Avg. Order Value', value: '$148.20', change: 'Steady', color: 'border-red-500', text: 'text-slate-500' },
+                ].map((stat, i) => (
+                    <div key={i} className={`card p-6 border-l-4 ${stat.color}`}>
+                        <h3 className="text-secondary text-[10px] md:text-xs uppercase font-semibold mb-2">{stat.label}</h3>
+                        <p className="text-xl md:text-2xl font-bold">{stat.value}</p>
+                        <p className={`${stat.text} text-[10px] md:text-xs mt-2 font-medium`}>{stat.change} growth</p>
+                    </div>
+                ))}
             </div>
 
             {/* Report Data Table */}
-            <div className="card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.25rem' }}>Recent Transaction Log</h2>
-                    <span style={{ fontSize: '0.875rem', color: 'var(--secondary)' }}>Showing {mockReportData.length} records</span>
+            <div className="card !p-0 overflow-hidden">
+                <div className="p-4 md:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-border">
+                    <h2 className="text-lg font-semibold">Recent Transaction Log</h2>
+                    <span className="text-xs text-secondary font-medium">Showing {mockReportData.length} records</span>
                 </div>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-                            <th style={{ padding: '1rem' }}>Date</th>
-                            <th style={{ padding: '1rem' }}>Description</th>
-                            <th style={{ padding: '1rem' }}>Amount</th>
-                            <th style={{ padding: '1rem' }}>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {mockReportData.map(item => (
-                            <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                <td style={{ padding: '1rem' }}>{item.date}</td>
-                                <td style={{ padding: '1rem' }}>{item.description}</td>
-                                <td style={{ padding: '1rem', fontWeight: '600' }}>${item.amount.toFixed(2)}</td>
-                                <td style={{ padding: '1rem' }}>
-                                    <span style={{
-                                        padding: '0.25rem 0.75rem',
-                                        borderRadius: '1rem',
-                                        fontSize: '0.75rem',
-                                        background: item.status === 'Completed' ? '#dcfce7' : '#fef3c7',
-                                        color: item.status === 'Completed' ? '#166534' : '#92400e'
-                                    }}>
-                                        {item.status}
-                                    </span>
-                                </td>
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse min-w-[600px]">
+                        <thead>
+                            <tr className="border-b border-border text-left bg-slate-50 text-[10px] md:text-xs uppercase text-secondary">
+                                <th className="p-4 font-bold">Date</th>
+                                <th className="p-4 font-bold">Description</th>
+                                <th className="p-4 font-bold">Amount</th>
+                                <th className="p-4 font-bold">Status</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {mockReportData.map(item => (
+                                <tr key={item.id} className="border-b border-border hover:bg-slate-50 transition-colors">
+                                    <td className="p-4 text-xs md:text-sm">{item.date}</td>
+                                    <td className="p-4 text-xs md:text-sm font-medium">{item.description}</td>
+                                    <td className="p-4 text-xs md:text-sm font-bold">${item.amount.toFixed(2)}</td>
+                                    <td className="p-4">
+                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${item.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                            }`}>
+                                            {item.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </AdminLayout>
     );

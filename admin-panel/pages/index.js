@@ -22,77 +22,62 @@ export default function Dashboard() {
 
   return (
     <AdminLayout>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Dashboard Overview</h1>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="btn" style={{ background: 'white', border: '1px solid var(--border)' }}>Last 7 Days</button>
-          <button className="btn btn-accent">Download Report</button>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold">Dashboard Overview</h1>
+        <div className="flex flex-wrap gap-2 md:gap-4 w-full sm:w-auto">
+          <button className="btn bg-white border border-border text-sm px-3 py-2 flex-1 sm:flex-none">Last 7 Days</button>
+          <button className="btn btn-accent text-sm px-3 py-2 flex-1 sm:flex-none">Download Report</button>
         </div>
       </div>
 
       {/* Main Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
-          <h3 style={{ color: 'var(--secondary)', fontSize: '0.875rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Total Revenue</h3>
-          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--accent)' }}>
-            ${stats?.totalRevenue || 0}
-          </p>
-          <p style={{ color: '#10b981', fontSize: '0.8125rem', marginTop: '0.5rem' }}>↑ 14% vs last week</p>
-          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', opacity: 0.1, fontSize: '5rem' }}>💰</div>
-        </div>
-        <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
-          <h3 style={{ color: 'var(--secondary)', fontSize: '0.875rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Bookings</h3>
-          <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-            {stats?.totalBookings || 0}
-          </p>
-          <p style={{ color: '#10b981', fontSize: '0.8125rem', marginTop: '0.5rem' }}>↑ 8% vs last week</p>
-          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', opacity: 0.1, fontSize: '5rem' }}>📅</div>
-        </div>
-        <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
-          <h3 style={{ color: 'var(--secondary)', fontSize: '0.875rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Active Listings</h3>
-          <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-            {stats?.totalListings || 0}
-          </p>
-          <p style={{ color: '#ef4444', fontSize: '0.8125rem', marginTop: '0.5rem' }}>↓ 2% vs last week</p>
-          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', opacity: 0.1, fontSize: '5rem' }}>📑</div>
-        </div>
-        <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
-          <h3 style={{ color: 'var(--secondary)', fontSize: '0.875rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Vendors</h3>
-          <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-            {stats?.totalVendors || 12}
-          </p>
-          <p style={{ color: '#10b981', fontSize: '0.8125rem', marginTop: '0.5rem' }}>↑ 3 new today</p>
-          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', opacity: 0.1, fontSize: '5rem' }}>👥</div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        {[
+          { label: 'Total Revenue', value: stats?.totalRevenue || 0, change: '↑ 14%', color: 'text-accent', icon: '💰', prefix: '$' },
+          { label: 'Bookings', value: stats?.totalBookings || 0, change: '↑ 8%', color: 'text-text', icon: '📅' },
+          { label: 'Active Listings', value: stats?.totalListings || 0, change: '↓ 2%', color: 'text-text', icon: '📑', neg: true },
+          { label: 'Vendors', value: stats?.totalVendors || 12, change: '↑ 3 new', color: 'text-text', icon: '👥' },
+        ].map((item, i) => (
+          <div key={i} className="card relative overflow-hidden p-5">
+            <h3 className="text-secondary text-[10px] md:text-xs font-semibold uppercase mb-2 tracking-wider">{item.label}</h3>
+            <p className={`text-2xl md:text-3xl font-bold ${item.color}`}>
+              {item.prefix}{item.value}
+            </p>
+            <p className={`text-[10px] md:text-xs mt-2 font-medium ${item.neg ? 'text-red-500' : 'text-green-500'}`}>
+              {item.change} vs last week
+            </p>
+            <div className="absolute -right-2 -bottom-2 opacity-10 text-6xl md:text-8xl select-none">{item.icon}</div>
+          </div>
+        ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
-        {/* Recent Bookings / Performance Section */}
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h2 style={{ fontSize: '1.25rem' }}>Platform Growth</h2>
-            <Link href="/reports" style={{ fontSize: '0.875rem', color: 'var(--accent)', textDecoration: 'none' }}>View Detailed Reports →</Link>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Performance Section */}
+        <div className="card lg:col-span-2 p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
+            <h2 className="text-lg md:text-xl font-semibold">Platform Growth</h2>
+            <Link href="/reports" className="text-xs md:text-sm text-accent hover:underline">View Detailed Reports →</Link>
           </div>
-          <div style={{ height: '240px', background: '#f8fafc', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--border)' }}>
-            <p style={{ color: 'var(--secondary)' }}>Chart Visualization Area (Revenue vs Time)</p>
+          <div className="h-[200px] md:h-[300px] bg-slate-50 rounded-md flex items-center justify-center border border-dashed border-border p-4 text-center">
+            <p className="text-secondary text-sm">Chart Visualization Area (Revenue vs Time)</p>
           </div>
         </div>
 
         {/* Activity Feed */}
-        <div className="card">
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Recent Activity</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="card p-6">
+          <h2 className="text-lg md:text-xl font-semibold mb-6">Recent Activity</h2>
+          <div className="flex flex-col gap-4">
             {[
               { text: 'New vendor "Oceanic Stays" registered', time: '10 mins ago', icon: '👤' },
               { text: 'Booking #842 completed by User42', time: '2 hours ago', icon: '✅' },
               { text: 'New listing "Mountain Cabin" pending approval', time: '5 hours ago', icon: '🔔' },
               { text: 'Payout of $4,200 processed to VendorX', time: '1 day ago', icon: '💸' },
             ].map((activity, i) => (
-              <div key={i} style={{ display: 'flex', gap: '1rem', paddingBottom: '1rem', borderBottom: i < 3 ? '1px solid var(--border)' : 'none' }}>
-                <div style={{ fontSize: '1.25rem' }}>{activity.icon}</div>
-                <div>
-                  <p style={{ margin: 0, fontSize: '0.9375rem', fontWeight: '500' }}>{activity.text}</p>
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--secondary)' }}>{activity.time}</p>
+              <div key={i} className={`flex gap-4 pb-4 ${i < 3 ? 'border-b border-border' : ''}`}>
+                <div className="text-xl shrink-0">{activity.icon}</div>
+                <div className="min-w-0">
+                  <p className="m-0 text-xs md:text-sm font-medium truncate">{activity.text}</p>
+                  <p className="m-0 text-[10px] md:text-xs text-secondary">{activity.time}</p>
                 </div>
               </div>
             ))}
@@ -103,8 +88,7 @@ export default function Dashboard() {
   );
 }
 
-// Helper component for the Link
-function Link({ href, children, style }) {
-  return <a href={href} style={style}>{children}</a>;
+function Link({ href, children, className }) {
+  return <a href={href} className={className}>{children}</a>;
 }
 

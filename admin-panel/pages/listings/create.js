@@ -33,17 +33,14 @@ export default function CreateListing() {
         try {
             if (item) {
                 const trimmedItem = item.trim();
-                if (trimmedItem.startsWith('U2FsdGVkX1') || (!trimmedItem.startsWith('{') && !trimmedItem.startsWith('['))) {
-                    throw new Error("Invalid format");
-                }
                 user = JSON.parse(trimmedItem);
             }
         } catch (e) {
-            console.error("Error parsing user from localStorage:", e);
+            console.error("Error parsing user:", e);
         }
 
         if (!user || !user.id) {
-            alert('User not logged in or invalid session. Please log in again.');
+            alert('Please log in again.');
             return;
         }
 
@@ -61,47 +58,94 @@ export default function CreateListing() {
 
     return (
         <AdminLayout>
-            <h1>Create New Listing</h1>
-            <div className="card" style={{ marginTop: '2rem', maxWidth: '600px' }}>
-                <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '1rem' }}>
-                        <label>Title</label>
-                        <input type="text" name="title" className="btn" style={{ width: '100%', border: '1px solid var(--border)', background: 'white' }} onChange={handleChange} required />
-                    </div>
-                    <div style={{ marginBottom: '1rem' }}>
-                        <label>Type</label>
-                        <select name="type" className="btn" style={{ width: '100%', border: '1px solid var(--border)', background: 'white' }} onChange={handleChange}>
-                            <option value="hotel">Hotel</option>
-                            <option value="cinema">Cinema</option>
-                            <option value="space">Space</option>
-                            <option value="vehicle">Vehicle</option>
-                        </select>
-                    </div>
+            <div className="max-w-3xl mx-auto">
+                <header className="mb-8">
+                    <h1 className="text-2xl md:text-3xl font-bold">Create New Listing</h1>
+                    <p className="text-secondary mt-2">Fill in the details to publish a new service.</p>
+                </header>
 
-                    {/* Conditional Fields based on Type */}
-                    {formData.type === 'hotel' && (
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label>Room Type</label>
-                            <select name="roomType" className="btn" style={{ width: '100%', border: '1px solid var(--border)', background: 'white' }} onChange={handleChange}>
-                                <option value="single">Single</option>
-                                <option value="double">Double</option>
-                                <option value="king">King</option>
-                            </select>
+                <div className="card p-6 md:p-8">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold">Title</label>
+                                <input
+                                    type="text"
+                                    name="title"
+                                    className="w-full p-3 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="e.g. Grand Plaza Hotel"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold">Service Type</label>
+                                <select
+                                    name="type"
+                                    className="w-full p-3 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-accent bg-white"
+                                    onChange={handleChange}
+                                >
+                                    <option value="hotel">Hotel</option>
+                                    <option value="cinema">Cinema</option>
+                                    <option value="space">Space</option>
+                                    <option value="vehicle">Vehicle</option>
+                                </select>
+                            </div>
                         </div>
-                    )}
 
-                    {/* ... Other types would have similar blocks ... */}
+                        {/* Conditional Fields based on Type */}
+                        {formData.type === 'hotel' && (
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold">Room Type</label>
+                                <select
+                                    name="roomType"
+                                    className="w-full p-3 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-accent bg-white"
+                                    onChange={handleChange}
+                                >
+                                    <option value="single">Single</option>
+                                    <option value="double">Double</option>
+                                    <option value="king">King</option>
+                                </select>
+                            </div>
+                        )}
 
-                    <div style={{ marginBottom: '1rem' }}>
-                        <label>Price</label>
-                        <input type="number" name="price" className="btn" style={{ width: '100%', border: '1px solid var(--border)', background: 'white' }} onChange={handleChange} required />
-                    </div>
-                    <div style={{ marginBottom: '1rem' }}>
-                        <label>Location</label>
-                        <input type="text" name="location" className="btn" style={{ width: '100%', border: '1px solid var(--border)', background: 'white' }} onChange={handleChange} required />
-                    </div>
-                    <button type="submit" className="btn btn-accent">Publish Listing</button>
-                </form>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold">Price per Night/Booking ($)</label>
+                                <input
+                                    type="number"
+                                    name="price"
+                                    className="w-full p-3 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold">Location</label>
+                                <input
+                                    type="text"
+                                    name="location"
+                                    className="w-full p-3 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="City, Country"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-4 flex flex-col sm:flex-row gap-4">
+                            <button type="submit" className="btn btn-accent px-8 py-3 w-full sm:w-auto">Publish Listing</button>
+                            <button
+                                type="button"
+                                onClick={() => router.back()}
+                                className="btn bg-white border border-border px-8 py-3 w-full sm:w-auto"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </AdminLayout>
     );

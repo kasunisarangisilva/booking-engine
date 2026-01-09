@@ -3,17 +3,29 @@ import AdminLayout from '../components/AdminLayout';
 export default function Settings() {
     return (
         <AdminLayout>
-            <h1>Platform Settings</h1>
-            <div className="card" style={{ marginTop: '2rem' }}>
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Platform Name</label>
-                    <input type="text" defaultValue="Multi-Vendor Booking" className="btn" style={{ border: '1px solid var(--border)', background: 'white', cursor: 'text', width: '300px' }} />
+            <div className="max-w-2xl mx-auto md:mx-0">
+                <h1 className="text-2xl md:text-3xl font-bold mb-8">Platform Settings</h1>
+                <div className="card p-6 md:p-8 space-y-6">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-semibold">Platform Name</label>
+                        <input
+                            type="text"
+                            defaultValue="Multi-Vendor Booking"
+                            className="w-full md:w-[400px] p-3 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-accent bg-white"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-semibold">Commission Rate (%)</label>
+                        <input
+                            type="number"
+                            defaultValue="10"
+                            className="w-full md:w-[400px] p-3 rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-accent bg-white"
+                        />
+                    </div>
+                    <div className="pt-4">
+                        <button className="btn btn-accent px-8 py-3 w-full md:w-auto">Save Changes</button>
+                    </div>
                 </div>
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Commission Rate (%)</label>
-                    <input type="number" defaultValue="10" className="btn" style={{ border: '1px solid var(--border)', background: 'white', cursor: 'text', width: '300px' }} />
-                </div>
-                <button className="btn btn-accent">Save Changes</button>
             </div>
         </AdminLayout>
     );
