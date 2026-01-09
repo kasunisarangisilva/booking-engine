@@ -10,6 +10,9 @@
   --color-border: #e2e8f0;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+  --radius-4xl: 2.5rem;
+  --color-booking-bg: #e0f0ff;
+  --color-booking-accent: #ffef00;
 }
 
 @layer base {
@@ -48,4 +51,108 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Booking Engine Styles */
+.booking-engine-container {
+  @apply min-h-screen bg-booking-bg flex flex-col font-sans;
+}
+
+.booking-wizard-card {
+  @apply flex-1 flex flex-col items-center justify-center p-4 md:p-8 lg:p-12 mb-24;
+}
+
+.booking-step-content {
+  @apply w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start;
+}
+
+.booking-option-card {
+  @apply bg-white border-2 border-transparent p-4 rounded-xl shadow-sm cursor-pointer transition-all duration-200 flex items-center justify-between mb-4 hover:border-blue-200;
+}
+
+.booking-option-card.selected {
+  @apply border-blue-500 shadow-md;
+}
+
+.booking-footer {
+  @apply h-20 md:h-24 border-t border-slate-200/60 bg-white/80 backdrop-blur-md flex items-center justify-between px-4 md:px-12 fixed bottom-0 left-0 right-0 z-50;
+}
+
+.step-indicator {
+  @apply hidden sm:flex gap-2;
+}
+
+.step-dot {
+  @apply w-3 h-3 rounded-sm bg-blue-200 transition-all duration-300;
+}
+
+.step-dot.active {
+  @apply bg-blue-900 w-4;
+}
+
+.btn-next {
+  @apply bg-booking-accent text-black font-black px-8 md:px-12 py-4 h-full flex items-center gap-4 hover:brightness-95 transition-all active:scale-95 disabled:grayscale disabled:opacity-50;
+}
+
+/* Payment Gateway Styles */
+.payment-card {
+  @apply border-2 border-slate-100 rounded-2xl p-6 transition-all cursor-pointer hover:border-blue-400 hover:bg-blue-50/30;
+}
+
+.payment-card.selected {
+  @apply border-blue-500 bg-blue-50/50 ring-2 ring-blue-500/20;
+}
+
+.cinema-grid {
+  @apply grid gap-2 justify-center;
+}
+
+.seat {
+  @apply w-8 h-8 md:w-10 md:h-10 border-2 border-slate-200 rounded-t-lg cursor-pointer transition-all hover:border-blue-400;
+}
+
+.seat.booked {
+  @apply bg-slate-200 cursor-not-allowed border-slate-200;
+}
+
+.seat.selected {
+  @apply bg-blue-500 border-blue-600;
+}
+
+/* Animations */
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-transition {
+  animation: fadeInSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.embed-code-card {
+  @apply bg-slate-900 text-slate-300 p-6 rounded-2xl font-mono text-sm relative overflow-hidden;
+}
+
+.copy-badge {
+  @apply absolute top-4 right-4 bg-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/50 hover:bg-white/20 transition-all cursor-pointer;
+}
+
+/* Custom Scrollbar for listings */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300;
 }

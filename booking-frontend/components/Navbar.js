@@ -25,6 +25,8 @@ const Navbar = () => {
                         }`}>Home</Link>
                     <Link href="/my-bookings" className={`text-sm font-semibold transition-colors no-underline ${scrolled ? 'text-text' : 'text-white/90 hover:text-white'
                         }`}>My Bookings</Link>
+                    <Link href="/booking-engine" className={`text-sm font-semibold transition-colors no-underline ${scrolled ? 'text-text' : 'text-white/90 hover:text-white'
+                        }`}>Booking Engine</Link>
                     <Link href="/login" className={`px-5 py-2 rounded-full text-sm font-bold transition-all no-underline ${scrolled
                         ? 'bg-primary text-white hover:opacity-90 shadow-lg shadow-blue-500/10'
                         : 'bg-white text-primary hover:bg-white/90'

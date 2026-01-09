@@ -11,7 +11,7 @@ const SearchFilters = ({ onSearch, isHero }) => {
 
     return (
         <div className={`transition-all duration-300 ${isHero
-            ? 'bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl md:rounded-[2rem] shadow-2xl'
+            ? 'bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl md:rounded-4xl shadow-2xl'
             : 'card mb-8'
             }`}>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 items-end">

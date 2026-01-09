@@ -1,0 +1,58 @@
+[
+  {
+    "id": "h1",
+    "vendorId": "v1",
+    "title": "Grand Plaza Hotel",
+    "description": "A luxury stay in the heart of the city with premium amenities and beautiful views.",
+    "type": "hotel",
+    "price": 250,
+    "location": "Downtown, Singapore",
+    "roomType": "king",
+    "amenities": ["Wifi", "Pool", "Spa"]
+  },
+  {
+    "id": "c1",
+    "vendorId": "v2",
+    "title": "Star Cineplex - Avengers",
+    "description": "Experience the latest blockbuster with Dolby Atmos sound and IMAX screen.",
+    "type": "cinema",
+    "price": 18,
+    "location": "Orchard Road, Singapore",
+    "movieTitle": "Avengers: Endgame",
+    "showTime": "7:30 PM",
+    "seatLayout": { "rows": 8, "cols": 10 }
+  },
+  {
+    "id": "v-1",
+    "vendorId": "v3",
+    "title": "Tesla Model S Plaid",
+    "description": "Rent the fastest accelerating car in production. Pure performance and luxury.",
+    "type": "vehicle",
+    "price": 145,
+    "location": "Changi Airport, Singapore",
+    "vehicleType": "car",
+    "features": ["Autopilot", "Glass Roof", "Premium Audio"],
+    "capacity": 5
+  },
+  {
+    "id": "s1",
+    "vendorId": "v4",
+    "title": "Sky Garden Event Space",
+    "description": "A breathtaking rooftop venue for weddings, corporate events, and parties.",
+    "type": "space",
+    "price": 850,
+    "location": "Marina Bay, Singapore",
+    "area": 5000,
+    "usageType": "event"
+  },
+  {
+    "id": "h2",
+    "vendorId": "v1",
+    "title": "Cosy Hostel Central",
+    "description": "Affordable and social accommodation for backpackers and travelers.",
+    "type": "hostel",
+    "price": 45,
+    "location": "Little India, Singapore",
+    "roomType": "dorm"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "1767940177041",
+    "userId": "user_123",
+    "listingId": "c1",
+    "details": {
+      "date": "2026-01-09T06:29:36.679Z"
+    },
+    "status": "confirmed",
+    "totalPrice": 18,
+    "createdAt": "2026-01-09T06:29:37.041Z"
+  },
+  {
+    "id": "1767940231688",
+    "userId": "user_123",
+    "listingId": "v-1",
+    "details": {
+      "date": "2026-01-09T06:30:31.659Z"
+    },
+    "status": "confirmed",
+    "totalPrice": 145,
+    "createdAt": "2026-01-09T06:30:31.689Z"
+  },
+  {
+    "id": "1767942288833",
+    "userId": "user_123",
+    "listingId": "c1",
+    "details": {
+      "seats": [
+        "A2",
+        "F7"
+      ],
+      "checkIn": "2026-01-16",
+      "checkOut": "2026-01-21",
+      "paymentMethod": "card"
+    },
+    "status": "confirmed",
+    "totalPrice": 18,
+    "createdAt": "2026-01-09T07:04:48.836Z"
+  },
+  {
+    "id": "1767943132022",
+    "userId": "user_123",
+    "listingId": "c1",
+    "details": {
+      "seats": [
+        "D2",
+        "F6"
+      ],
+      "paymentMethod": "card"
+    },
+    "status": "confirmed",
+    "totalPrice": 18,
+    "createdAt": "2026-01-09T07:18:52.023Z"
+  }
+]

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import Link from 'next/link';
 import SearchFilters from '../components/SearchFilters';
 import ListingCard from '../components/ListingCard';
 import Navbar from '../components/Navbar';
@@ -63,8 +64,13 @@ export default function Home() {
             Find and book the best hotels, movies, events, and luxury transport in one place.
           </p>
 
-          <div className="max-w-4xl mx-auto">
-            <SearchFilters onSearch={handleSearch} isHero />
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex-1 max-w-2xl">
+              <SearchFilters onSearch={handleSearch} isHero />
+            </div>
+            <Link href="/booking-engine" className="btn bg-booking-accent text-black hover:brightness-95 px-8 py-3 rounded-xl font-extrabold flex items-center justify-center gap-2 whitespace-nowrap shadow-xl">
+              Get a Demo <span className="text-xl">→</span>
+            </Link>
           </div>
         </div>
       </section>
