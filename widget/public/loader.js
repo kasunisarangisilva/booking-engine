@@ -8,21 +8,14 @@
     const scriptUrl = new URL(script.src);
     const baseUrl = scriptUrl.origin + scriptUrl.pathname.replace('loader.js', '');
 
-    // 2. Inject the CSS
-    if (!document.getElementById('booking-widget-styles')) {
-        const link = document.createElement('link');
-        link.id = 'booking-widget-styles';
-        link.rel = 'stylesheet';
-        link.href = baseUrl + 'widget.css';
-        document.head.appendChild(link);
-    }
-
-    // 3. Inject the Main JS
+    // 2. Inject the Main JS
     if (!document.getElementById('booking-widget-js')) {
         const js = document.createElement('script');
         js.id = 'booking-widget-js';
         js.src = baseUrl + 'widget.iife.js';
         js.async = true;
+        // Pass the CSS URL to the widget via a global or attribute
+        window.__BOOKING_WIDGET_CSS__ = baseUrl + 'widget.css';
         document.body.appendChild(js);
     }
 })();

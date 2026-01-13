@@ -10,26 +10,35 @@ class BookingWidget extends HTMLElement {
     container.id = 'booking-widget-container';
     shadow.appendChild(container);
 
-    // Style Injection: Copy styles to shadow root
+    // Style Injection: Copy specific widget styles to shadow root
     const injectStyles = () => {
-      const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
-      styles.forEach(style => {
-        // Only inject if it's not already there
-        if (!shadow.querySelector(`[data-origin="${style.tagName}"]`)) {
-          const clone = style.cloneNode(true);
-          if (clone.tagName === 'LINK') {
-            // Ensure absolute URL if needed, but for now just copy
+      // 1. Check for the specific CSS variable passed by loader
+      const cssUrl = window.__BOOKING_WIDGET_CSS__;
+
+      if (cssUrl && !shadow.querySelector(`link[href="${cssUrl}"]`)) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = cssUrl;
+        shadow.appendChild(link);
+      }
+
+      // 2. In DEV mode, we still need to find Vite's injected styles
+      if (import.meta.env.DEV) {
+        const styles = document.querySelectorAll('style[data-vite-dev-id]');
+        styles.forEach(style => {
+          if (!shadow.querySelector(`style[data-origin="${style.getAttribute('data-vite-dev-id')}"]`)) {
+            const clone = style.cloneNode(true);
+            clone.setAttribute('data-origin', style.getAttribute('data-vite-dev-id'));
+            shadow.appendChild(clone);
           }
-          shadow.appendChild(clone);
-        }
-      });
+        });
+      }
     };
 
     if (import.meta.env.DEV) {
       setTimeout(injectStyles, 100);
     } else {
-      // In production, we might need a small delay for the browser to parse injected links
-      setTimeout(injectStyles, 50);
+      injectStyles(); // In production, we can run it immediately if loader set the var
     }
 
     const root = ReactDOM.createRoot(container);

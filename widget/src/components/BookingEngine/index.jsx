@@ -65,12 +65,12 @@ export default function BookingEngine() {
                                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Add this to your website</h3>
                                 <div className="embed-code-card">
                                     <code>{`<!-- 1. Add this script once to your <head> or before </body> -->
-<script src="${window.location.origin}/loader.js"></script>
+<script src="https://booking-engine-widget.vercel.app/loader.js"></script>
 
 <!-- 2. Place this tag where you want the widget to appear -->
-<booking-engine data-account-id="DEMO_123"></booking-engine>`}</code>
+<booking-engine data-account-id="YOUR_ACCOUNT_ID"></booking-engine>`}</code>
                                     <div className="copy-badge" onClick={() => {
-                                        const code = `<script src="${window.location.origin}/loader.js"></script>\n<booking-engine data-account-id="DEMO_123"></booking-engine>`;
+                                        const code = `<script src="https://booking-engine-widget.vercel.app/loader.js"></script>\n<booking-engine data-account-id="YOUR_ACCOUNT_ID"></booking-engine>`;
                                         navigator.clipboard.writeText(code);
                                         alert('Copied to clipboard!');
                                     }}>Copy</div>
