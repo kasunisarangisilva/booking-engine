@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0f172a;
+  --color-accent: #3b82f6;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text: #1e293b;
+  --color-text-light: #64748b;
+  --color-border: #e2e8f0;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-4xl: 2.5rem;
+  --color-booking-bg: #e0f0ff;
+  --color-booking-accent: #ffef00;
+}
+
+:host {
+  display: block;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl font-bold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer border-none;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-accent shadow-lg shadow-blue-500/10 hover:shadow-blue-500/25;
+  }
+}
+
+/* Booking Engine Styles */
+.booking-engine-container {
+  @apply min-h-[600px] lg:min-h-screen bg-booking-bg flex flex-col font-sans relative overflow-hidden;
+}
+
+.booking-wizard-card {
+  @apply flex-1 flex flex-col items-center justify-center p-6 md:p-12 lg:p-16 mb-24;
+}
+
+.booking-step-content {
+  @apply w-full max-w-6xl flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-20 items-center lg:items-start;
+}
+
+.booking-option-card {
+  @apply bg-white border-2 border-transparent p-4 md:p-5 rounded-2xl shadow-sm cursor-pointer transition-all duration-300 flex items-center justify-between mb-4 hover:border-blue-200 w-full;
+}
+
+.booking-option-card.selected {
+  @apply border-blue-500 shadow-md ring-4 ring-blue-500/5;
+}
+
+.booking-footer {
+  @apply h-24 md:h-28 border-t border-slate-200/60 bg-white/90 backdrop-blur-xl flex items-center justify-between px-6 md:px-16 fixed bottom-0 left-0 right-0 z-50;
+}
+
+.step-indicator {
+  @apply flex gap-3;
+}
+
+.step-dot {
+  @apply w-2.5 h-2.5 rounded-full bg-blue-100 transition-all duration-300;
+}
+
+.step-dot.active {
+  @apply bg-blue-900 w-6;
+}
+
+.btn-next {
+  @apply bg-booking-accent text-black font-black px-10 md:px-16 py-5 h-full flex items-center gap-4 hover:brightness-95 transition-all active:scale-95 disabled:grayscale disabled:opacity-50 text-base md:text-lg;
+}
+
+.step-transition {
+  @apply w-full;
+  animation: fadeInSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300;
+}
+
+.embed-code-card {
+  @apply bg-slate-900 text-slate-300 p-8 rounded-3xl font-mono text-sm relative overflow-hidden shadow-2xl;
+}
+
+.copy-badge {
+  @apply absolute top-5 right-5 bg-white/10 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest text-white/50 hover:bg-white/20 transition-all cursor-pointer;
+}
+
+/* Mobile Specific Tweaks */
+@media (max-width: 768px) {
+  .booking-wizard-card {
+    @apply p-6 pt-24 mb-32;
+  }
+
+  .booking-footer {
+    @apply px-4 h-24;
+  }
+
+  .step-indicator {
+    @apply gap-2;
+  }
+
+  .btn-next {
+    @apply px-8;
+  }
+}
