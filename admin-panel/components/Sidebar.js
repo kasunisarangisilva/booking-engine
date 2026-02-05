@@ -1,17 +1,22 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { LayoutDashboard, Store, List, BarChart, Settings, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ isOpen, closeSidebar }) {
     const router = useRouter();
+    const { user } = useAuth();
+
 
     const navItems = [
         { name: 'Dashboard', href: '/', icon: LayoutDashboard },
         { name: 'Vendors (Admin)', href: '/vendors', icon: Store },
         { name: 'My Listings (Vendor)', href: '/listings', icon: List },
+        { name: 'Bookings', href: '/bookings', icon: List },
         { name: 'Reports', href: '/reports', icon: BarChart },
         { name: 'Settings', href: '/settings', icon: Settings },
     ];
+
 
     return (
         <>
@@ -36,11 +41,12 @@ export default function Sidebar({ isOpen, closeSidebar }) {
                             <User className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="font-semibold text-gray-900 dark:text-white">Kasuni Sarangi</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Admin</p>
+                            <p className="font-semibold text-gray-900 dark:text-white">{user?.name || 'Kasuni Sarangi'}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{user?.role || 'Admin'}</p>
                         </div>
                     </div>
                 </div>
+
 
                 <div className="p-4 space-y-2 mt-4 lg:mt-20">
                     {navItems.map((item) => {

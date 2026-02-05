@@ -3,9 +3,15 @@ import { Fragment } from 'react';
 import { Popover, Transition, Switch } from '@headlessui/react';
 import { Bell, User, LogOut, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+
+
+
 
 export default function Header({ toggleSidebar }) {
     const { theme, toggleTheme } = useTheme();
+    const { user, logout } = useAuth();
+
 
     return (
         <header className="h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 fixed top-0 right-0 left-0 z-30 transition-all duration-300">
@@ -56,8 +62,8 @@ export default function Header({ toggleSidebar }) {
                             >
                                 <Popover.Panel className="absolute right-0 z-50 mt-2 w-72 origin-top-right rounded-md bg-white dark:bg-slate-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-200 dark:border-slate-700">
                                     <div className="px-4 py-4 border-b border-gray-200 dark:border-slate-700">
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white">Kasuni Sarangi</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">kasunisarangi259@gmail.com</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name || 'Kasuni Sarangi'}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'kasunisarangi259@gmail.com'}</p>
                                     </div>
 
                                     <div className="py-1">
@@ -94,11 +100,15 @@ export default function Header({ toggleSidebar }) {
                                     </div>
 
                                     <div className="py-1 border-t border-gray-200 dark:border-slate-700">
-                                        <button className="group flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700">
+                                        <button
+                                            onClick={logout}
+                                            className="group flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+                                        >
                                             <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
                                             Log out
                                         </button>
                                     </div>
+
                                 </Popover.Panel>
                             </Transition>
                         </>
