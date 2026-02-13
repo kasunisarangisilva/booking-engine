@@ -15,13 +15,15 @@ export default function Vendors() {
 
     const fetchVendors = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/admin/vendors`);
-            // Add mock status and type for demonstration since it might not be in the real API yet
+            const res = await axios.get(`${API_BASE}/admin/vendors`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            // Ensure status defaults if missing
             const enrichedVendors = res.data.map(v => ({
                 ...v,
-                status: v.isApproved ? 'active' : 'pending',
-                type: ['Hotel', 'Cinema', 'Rental'][Math.floor(Math.random() * 3)],
-                joined: '2025-11-12'
+                status: v.status || 'pending',
+                type: 'Vendor', // Backend doesn't have type yet, defaulting
+                joined: v.createdAt ? v.createdAt.split('T')[0] : 'N/A'
             }));
             setVendors(enrichedVendors);
         } catch (err) {
@@ -31,15 +33,21 @@ export default function Vendors() {
 
     const handleAction = async (id, action) => {
         try {
+            const token = localStorage.getItem('token');
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+
             if (action === 'approve') {
-                await axios.post(`${API_BASE}/admin/vendors/approve`, { vendorId: id });
+                await axios.post(`${API_BASE}/admin/vendors/approve`, { vendorId: id }, config);
                 alert('Vendor approved');
+            } else if (action === 'suspend') {
+                await axios.post(`${API_BASE}/admin/vendors/suspend`, { vendorId: id }, config);
+                alert('Vendor suspended');
             } else {
-                alert(`Vendor ${action} action performed (Mock)`);
+                alert(`Vendor ${action} action performed`);
             }
             fetchVendors();
         } catch (err) {
-            alert('Action failed');
+            alert('Action failed: ' + (err.response?.data?.message || err.message));
         }
     };
 

@@ -89,3 +89,13 @@ exports.getListingById = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+exports.getMyListings = async (req, res) => {
+    try {
+        const listings = await Listing.find({ vendorId: req.user._id }).populate('vendorId', 'name email');
+        res.status(200).json(listings);
+    } catch (error) {
+        console.error('Get my listings error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};

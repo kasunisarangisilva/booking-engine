@@ -64,3 +64,30 @@ exports.getAllBookings = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+exports.getVendorBookings = async (req, res) => {
+    try {
+        const vendorId = req.user._id;
+
+        // Find listings belonging to this vendor
+        // We need to look up bookings where the listingId -> vendorId matches current user.
+        // Option 1: Find all listings for vendor, then find bookings for those listings.
+        // Option 2: Populate and filter (less efficient but okay for now). 
+        // Better: Use aggregate or two queries.
+
+        // Step 1: Get all listing IDs for this vendor
+        const listings = await Listing.find({ vendorId }).select('_id');
+        const listingIds = listings.map(l => l._id);
+
+        // Step 2: Find bookings for these listings
+        const bookings = await Booking.find({ listingId: { $in: listingIds } })
+            .populate('listingId', 'title type price location')
+            .populate('userId', 'name email')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(bookings);
+    } catch (error) {
+        console.error('Get vendor bookings error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};

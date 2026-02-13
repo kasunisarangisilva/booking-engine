@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import AdminLayout from '../components/AdminLayout';
 import GrowthChart from '../components/GrowthChart';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE = 'http://localhost:5000/api';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchStats();
@@ -14,12 +16,26 @@ export default function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/admin/reports`);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE}/admin/reports`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setStats(res.data);
     } catch (err) {
       console.error(err);
     }
   };
+
+  const userRole = user?.role || 'user';
+
+  const statsItems = [
+    { label: 'Total Revenue', value: stats?.totalRevenue || 0, change: '↑ 14%', color: 'text-accent', icon: '💰', prefix: '$', roles: ['admin', 'vendor'] },
+    { label: 'Bookings', value: stats?.totalBookings || 0, change: '↑ 8%', color: 'text-text', icon: '📅', roles: ['vendor'] },
+    { label: 'Active Listings', value: stats?.totalListings || 0, change: '↓ 2%', color: 'text-text', icon: '📑', neg: true, roles: ['admin', 'vendor'] },
+    { label: 'Vendors', value: stats?.totalVendors || 12, change: '↑ 3 new', color: 'text-text', icon: '👥', roles: ['admin'] },
+  ];
+
+  const visibleStats = statsItems.filter(item => item.roles.includes(userRole));
 
   return (
     <AdminLayout>
@@ -32,13 +48,8 @@ export default function Dashboard() {
       </div>
 
       {/* Main Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-        {[
-          { label: 'Total Revenue', value: stats?.totalRevenue || 0, change: '↑ 14%', color: 'text-accent', icon: '💰', prefix: '$' },
-          { label: 'Bookings', value: stats?.totalBookings || 0, change: '↑ 8%', color: 'text-text', icon: '📅' },
-          { label: 'Active Listings', value: stats?.totalListings || 0, change: '↓ 2%', color: 'text-text', icon: '📑', neg: true },
-          { label: 'Vendors', value: stats?.totalVendors || 12, change: '↑ 3 new', color: 'text-text', icon: '👥' },
-        ].map((item, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
+        {visibleStats.map((item, i) => (
           <div key={i} className="card relative overflow-hidden p-5 bg-white dark:bg-slate-800">
             <h3 className="text-secondary dark:text-gray-400 text-[10px] md:text-xs font-semibold uppercase mb-2 tracking-wider">{item.label}</h3>
             <p className={`text-2xl md:text-3xl font-bold ${item.color} dark:text-white`}>

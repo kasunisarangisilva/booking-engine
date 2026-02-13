@@ -5,10 +5,18 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_123';
 
 exports.signup = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, adminSecret } = req.body;
 
         if (!name || !email || !password || !role) {
             return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        // Verify Admin Secret if role is admin
+        if (role === 'admin') {
+            const ADMIN_SETUP_KEY = process.env.ADMIN_SETUP_KEY || 'admin_secret_key_123';
+            if (adminSecret !== ADMIN_SETUP_KEY) {
+                return res.status(403).json({ message: 'Invalid Admin Setup Key' });
+            }
         }
 
         // Check if user already exists

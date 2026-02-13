@@ -20,11 +20,26 @@ export default function ManageListings() {
 
     const fetchListings = async (vendorId) => {
         try {
-            const res = await axios.get(`${API_BASE}/listings`, {
+            // Determine endpoint based on role (or if vendorId is present and matches current user)
+            // If user is vendor, use /my to get their listings. 
+            // If user is admin, they might want to see all -> /listings (Public) or I should creating a secure /admin/listings?
+            // For now, Admins see "All Listings", so /listings (public) is fine.
+            // Vendors see "My Listings".
+
+            let endpoint = `${API_BASE}/listings`;
+            if (user?.role === 'vendor') {
+                endpoint = `${API_BASE}/listings/my`;
+            }
+
+            const res = await axios.get(endpoint, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            // Filter for this vendor (in a real app, backend might handle this)
-            setListings(res.data.filter(l => l.vendorId?._id === vendorId || l.vendorId === vendorId));
+
+            // If endpoint was /my, backend filtered it.
+            // If endpoint was /listings, it returns all.
+            // If Admin, they see all.
+
+            setListings(res.data);
         } catch (err) {
             console.error(err);
         }
