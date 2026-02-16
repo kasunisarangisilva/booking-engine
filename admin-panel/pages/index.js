@@ -3,15 +3,34 @@ import axios from 'axios';
 import AdminLayout from '../components/AdminLayout';
 import GrowthChart from '../components/GrowthChart';
 import { useAuth } from '../context/AuthContext';
+import Link from 'next/link';
 
 const API_BASE = 'http://localhost:5000/api';
 
+function timeAgo(dateStr) {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const seconds = Math.floor((now - date) / 1000);
+  if (seconds < 60) return 'Just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} day${days > 1 ? 's' : ''} ago`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months > 1 ? 's' : ''} ago`;
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
+  const [activities, setActivities] = useState([]);
+  const [loadingActivities, setLoadingActivities] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
     fetchStats();
+    fetchActivities();
   }, []);
 
   const fetchStats = async () => {
@@ -23,6 +42,20 @@ export default function Dashboard() {
       setStats(res.data);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE}/admin/recent-activities?limit=4`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setActivities(res.data.activities || []);
+    } catch (err) {
+      console.error('Failed to fetch activities:', err);
+    } finally {
+      setLoadingActivities(false);
     }
   };
 
@@ -79,29 +112,39 @@ export default function Dashboard() {
         <div className="card p-6">
           <h2 className="text-lg md:text-xl font-semibold mb-6 text-slate-900 dark:text-white">Recent Activity</h2>
           <div className="flex flex-col gap-4">
-            {[
-              { text: 'New vendor "Oceanic Stays" registered', time: '10 mins ago', icon: '👤' },
-              { text: 'Booking #842 completed by User42', time: '2 hours ago', icon: '✅' },
-              { text: 'New listing "Mountain Cabin" pending approval', time: '5 hours ago', icon: '🔔' },
-              { text: 'Payout of $4,200 processed to VendorX', time: '1 day ago', icon: '💸' },
-              {/* ... */ }
-            ].map((activity, i) => (
-              <div key={i} className={`flex gap-4 pb-4 ${i < 3 ? 'border-b border-border dark:border-slate-700' : ''}`}>
-                <div className="text-xl shrink-0">{activity.icon}</div>
-                <div className="min-w-0">
-                  <p className="m-0 text-xs md:text-sm font-medium truncate">{activity.text}</p>
-                  <p className="m-0 text-[10px] md:text-xs text-secondary">{activity.time}</p>
+            {loadingActivities ? (
+              // Loading skeleton
+              [...Array(4)].map((_, i) => (
+                <div key={i} className="flex gap-4 pb-4 border-b border-border dark:border-slate-700 animate-pulse">
+                  <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+                    <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : activities.length === 0 ? (
+              <p className="text-sm text-secondary dark:text-gray-400 text-center py-4">No recent activity</p>
+            ) : (
+              activities.slice(0, 4).map((activity, i) => (
+                <div key={i} className={`flex gap-4 pb-4 ${i < 3 ? 'border-b border-border dark:border-slate-700' : ''}`}>
+                  <div className="text-xl shrink-0">{activity.icon}</div>
+                  <div className="min-w-0">
+                    <p className="m-0 text-xs md:text-sm font-medium truncate">{activity.text}</p>
+                    <p className="m-0 text-[10px] md:text-xs text-secondary">{timeAgo(activity.time)}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
+          {!loadingActivities && activities.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-border dark:border-slate-700 text-center">
+              <Link href="/recent-activities" className="text-sm text-accent hover:underline font-medium">View All Activities →</Link>
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>
   );
-}
-
-function Link({ href, children, className }) {
-  return <a href={href} className={className}>{children}</a>;
 }
 

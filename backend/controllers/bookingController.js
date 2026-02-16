@@ -1,5 +1,6 @@
 const Booking = require('../models/Booking');
 const { Listing } = require('../models/Listing');
+const Notification = require('../models/Notification');
 
 exports.createBooking = async (req, res) => {
     try {
@@ -26,6 +27,45 @@ exports.createBooking = async (req, res) => {
         // Populate listing and user details
         await newBooking.populate('listingId', 'title type price');
         await newBooking.populate('userId', 'name email');
+
+        // --- Notification Logic ---
+
+        console.log('[Booking] Listing details:', {
+            listingId: listing._id,
+            listingTitle: listing.title,
+            vendorId: listing.vendorId,
+            vendorIdType: typeof listing.vendorId
+        });
+
+        // 1. For Admin
+        const adminNotif = new Notification({
+            recipient: 'admin',
+            type: 'new_booking',
+            message: `New booking for ${listing.title}`,
+            data: { bookingId: newBooking._id, listingId: listing._id }
+        });
+        await adminNotif.save();
+
+        req.io.to('admin').emit('notification', {
+            ...adminNotif.toObject(),
+            data: newBooking // Send full booking data for immediate UI update if needed
+        });
+
+        // 2. For Vendor
+        const vendorNotif = new Notification({
+            recipient: listing.vendorId.toString(), // Convert ObjectId to String
+            type: 'new_booking',
+            message: `New booking received for ${listing.title}`,
+            data: { bookingId: newBooking._id, listingId: listing._id }
+        });
+        await vendorNotif.save();
+
+        const vendorRoom = `vendor_${listing.vendorId}`;
+        console.log('[Booking] Emitting notification to vendor room:', vendorRoom, 'Vendor ID:', listing.vendorId);
+        req.io.to(vendorRoom).emit('notification', {
+            ...vendorNotif.toObject(),
+            data: newBooking
+        });
 
         res.status(201).json(newBooking);
     } catch (error) {

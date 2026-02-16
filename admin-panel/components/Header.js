@@ -4,13 +4,13 @@ import { Popover, Transition, Switch } from '@headlessui/react';
 import { Bell, User, LogOut, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-
-
+import { useNotification } from '../context/NotificationContext';
 
 
 export default function Header({ toggleSidebar }) {
     const { theme, toggleTheme } = useTheme();
     const { user, logout } = useAuth();
+    const { unreadCount, openDrawer } = useNotification();
 
 
     return (
@@ -31,12 +31,17 @@ export default function Header({ toggleSidebar }) {
             <div className="flex-1"></div>
 
             <div className="flex items-center gap-4">
-                <button className="relative p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <button
+                    className="relative p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                    onClick={openDrawer}
+                >
                     <span className="sr-only">View notifications</span>
                     <Bell className="w-6 h-6" />
-                    <span className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-red-500 text-[10px] font-medium text-white flex items-center justify-center">
-                        1
-                    </span>
+                    {unreadCount > 0 && (
+                        <span className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-red-500 text-[10px] font-medium text-white flex items-center justify-center">
+                            {unreadCount}
+                        </span>
+                    )}
                 </button>
 
                 {/* Profile Dropdown */}

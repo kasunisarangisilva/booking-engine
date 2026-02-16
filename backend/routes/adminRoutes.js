@@ -13,6 +13,7 @@ router.post('/vendors/suspend', authorize('admin'), adminController.suspendVendo
 
 // Reports - Accessible by Admin and Vendor (Controller filters data)
 router.get('/reports', adminController.getReports);
+router.get('/recent-activities', adminController.getRecentActivities);
 router.get('/export-report', adminController.exportReport);
 
 module.exports = router;

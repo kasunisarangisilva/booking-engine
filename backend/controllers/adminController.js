@@ -4,8 +4,26 @@ const { Listing } = require('../models/Listing');
 
 exports.getAllVendors = async (req, res) => {
     try {
-        const vendors = await User.find({ role: 'vendor' }).select('-password');
-        res.status(200).json(vendors);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const totalVendors = await User.countDocuments({ role: 'vendor' });
+        const vendors = await User.find({ role: 'vendor' })
+            .select('-password')
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            vendors,
+            pagination: {
+                total: totalVendors,
+                page,
+                limit,
+                totalPages: Math.ceil(totalVendors / limit)
+            }
+        });
     } catch (error) {
         console.error('Get all vendors error:', error);
         res.status(500).json({ message: 'Server error' });
@@ -241,6 +259,128 @@ exports.exportReport = async (req, res) => {
 
     } catch (error) {
         console.error('Export report error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+exports.getRecentActivities = async (req, res) => {
+    try {
+        const user = req.user;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const fetchSize = page * limit;
+        let activities = [];
+        let totalActivities = 0;
+
+        if (user.role === 'admin') {
+            // Get total counts for admin
+            const counts = await Promise.all([
+                User.countDocuments({ role: 'vendor' }),
+                Booking.countDocuments(),
+                Listing.countDocuments()
+            ]);
+            totalActivities = counts.reduce((a, b) => a + b, 0);
+
+            // Fetch recent data from all 3 sources
+            const [recentVendors, recentBookings, recentListings] = await Promise.all([
+                User.find({ role: 'vendor' }).sort({ createdAt: -1 }).limit(fetchSize).select('name createdAt'),
+                Booking.find().sort({ createdAt: -1 }).limit(fetchSize).populate('userId', 'name').populate('listingId', 'title'),
+                Listing.find().sort({ createdAt: -1 }).limit(fetchSize).populate('vendorId', 'name')
+            ]);
+
+            recentVendors.forEach(v => {
+                activities.push({
+                    text: `New vendor "${v.name}" registered`,
+                    time: v.createdAt,
+                    icon: '👤',
+                    type: 'vendor_registration'
+                });
+            });
+
+            recentBookings.forEach(b => {
+                const customerName = b.userId?.name || 'Unknown';
+                const listingTitle = b.listingId?.title || 'Unknown';
+                const statusText = b.status === 'confirmed' ? 'completed' : b.status;
+                activities.push({
+                    text: `Booking for "${listingTitle}" ${statusText} by ${customerName}`,
+                    time: b.createdAt,
+                    icon: b.status === 'confirmed' ? '✅' : b.status === 'cancelled' ? '❌' : '📅',
+                    type: 'booking'
+                });
+            });
+
+            recentListings.forEach(l => {
+                const vendorName = l.vendorId?.name || 'Unknown';
+                activities.push({
+                    text: `New listing "${l.title}" created by ${vendorName}`,
+                    time: l.createdAt,
+                    icon: '🔔',
+                    type: 'new_listing'
+                });
+            });
+
+        } else if (user.role === 'vendor') {
+            // Get vendor listing IDs for booking count
+            const allMyListings = await Listing.find({ vendorId: user._id }).select('_id');
+            const listingIds = allMyListings.map(l => l._id);
+
+            // Get total counts for vendor
+            const counts = await Promise.all([
+                Listing.countDocuments({ vendorId: user._id }),
+                Booking.countDocuments({ listingId: { $in: listingIds } })
+            ]);
+            totalActivities = counts.reduce((a, b) => a + b, 0);
+
+            // Fetch data
+            const [myListings, myBookings] = await Promise.all([
+                Listing.find({ vendorId: user._id }).sort({ createdAt: -1 }).limit(fetchSize),
+                Booking.find({ listingId: { $in: listingIds } })
+                    .sort({ createdAt: -1 })
+                    .limit(fetchSize)
+                    .populate('userId', 'name')
+                    .populate('listingId', 'title')
+            ]);
+
+            myBookings.forEach(b => {
+                const customerName = b.userId?.name || 'Unknown';
+                const listingTitle = b.listingId?.title || 'Unknown';
+                const statusText = b.status === 'confirmed' ? 'completed' : b.status;
+                activities.push({
+                    text: `Booking for "${listingTitle}" ${statusText} by ${customerName}`,
+                    time: b.createdAt,
+                    icon: b.status === 'confirmed' ? '✅' : b.status === 'cancelled' ? '❌' : '📅',
+                    type: 'booking'
+                });
+            });
+
+            myListings.forEach(l => {
+                activities.push({
+                    text: `Your listing "${l.title}" was created`,
+                    time: l.createdAt,
+                    icon: '🔔',
+                    type: 'new_listing'
+                });
+            });
+        } else {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        // Sort by time descending and slice for the current page
+        activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+        const startIndex = (page - 1) * limit;
+        const pagedActivities = activities.slice(startIndex, startIndex + limit);
+
+        res.status(200).json({
+            activities: pagedActivities,
+            pagination: {
+                total: totalActivities,
+                page,
+                limit,
+                totalPages: Math.ceil(totalActivities / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Get recent activities error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
