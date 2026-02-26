@@ -8,30 +8,29 @@ const API_BASE = 'http://localhost:5000/api';
 export default function ViewBookings() {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const { user, token } = useAuth();
 
     useEffect(() => {
         if (user?._id) {
             fetchBookings();
         }
-    }, [user]);
+    }, [user, page]);
 
     const fetchBookings = async () => {
+        setLoading(true);
         try {
-            // We only show bookings to vendors now (Sidebar restricted)
-            // But if an Admin somehow gets here, we can either block them or show nothing.
-            // Backend /vendor route is protected for vendors only.
-
             if (user.role !== 'vendor') {
-                // Admin shouldn't be here, but if they are, show empty or handle gracefully
                 setLoading(false);
                 return;
             }
 
-            const res = await axios.get(`${API_BASE}/bookings/vendor`, {
+            const res = await axios.get(`${API_BASE}/bookings/vendor?page=${page}&limit=10`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setBookings(res.data);
+            setBookings(res.data.bookings);
+            setTotalPages(res.data.totalPages);
         } catch (err) {
             console.error(err);
         } finally {
@@ -41,9 +40,11 @@ export default function ViewBookings() {
 
     return (
         <AdminLayout>
-            <header className="mb-8">
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Bookings Management</h1>
-                <p className="text-secondary mt-2 text-lg font-medium">View and manage all guest reservations.</p>
+            <header className="mb-8 flex justify-between items-end">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Bookings Management</h1>
+                    <p className="text-secondary mt-2 text-lg font-medium">View and manage all guest reservations.</p>
+                </div>
             </header>
 
             <div className="card p-0! overflow-hidden shadow-xl border border-border">
@@ -57,45 +58,70 @@ export default function ViewBookings() {
                         <p className="text-lg font-medium">No bookings found yet.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse min-w-[800px]">
-                            <thead>
-                                <tr className="border-b-2 border-border text-left bg-slate-50 text-xs uppercase text-slate-500 font-black tracking-widest">
-                                    <th className="p-5">Guest</th>
-                                    <th className="p-5">Listing</th>
-                                    <th className="p-5">Price</th>
-                                    <th className="p-5">Status</th>
-                                    <th className="p-5">Date Created</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {bookings.map(b => (
-                                    <tr key={b._id} className="border-b border-border hover:bg-slate-50 transition-colors">
-                                        <td className="p-5">
-                                            <div className="font-bold text-slate-900">{b.userId?.name || 'Guest User'}</div>
-                                            <div className="text-xs text-secondary">{b.userId?.email || 'N/A'}</div>
-                                        </td>
-                                        <td className="p-5">
-                                            <div className="font-bold text-blue-600">{b.listingId?.title || 'Unknown Listing'}</div>
-                                            <div className="text-xs text-secondary capitalize">{b.listingId?.type}</div>
-                                        </td>
-                                        <td className="p-5 font-black text-slate-900">${b.totalPrice}</td>
-                                        <td className="p-5">
-                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${b.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                                                b.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                                    'bg-yellow-100 text-yellow-700'
-                                                }`}>
-                                                {b.status}
-                                            </span>
-                                        </td>
-                                        <td className="p-5 text-sm text-secondary font-medium">
-                                            {new Date(b.createdAt).toLocaleDateString()}
-                                        </td>
+                    <>
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr className="border-b-2 border-border text-left bg-slate-50 text-xs uppercase text-slate-500 font-black tracking-widest">
+                                        <th className="p-5">Guest</th>
+                                        <th className="p-5">Listing</th>
+                                        <th className="p-5">Price</th>
+                                        <th className="p-5">Status</th>
+                                        <th className="p-5">Date Created</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {bookings.map(b => (
+                                        <tr key={b._id} className="border-b border-border hover:bg-slate-50 transition-colors">
+                                            <td className="p-5">
+                                                <div className="font-bold text-slate-900">{b.userId?.name || 'Guest User'}</div>
+                                                <div className="text-xs text-secondary">{b.userId?.email || 'N/A'}</div>
+                                            </td>
+                                            <td className="p-5">
+                                                <div className="font-bold text-blue-600">{b.listingId?.title || 'Unknown Listing'}</div>
+                                                <div className="text-xs text-secondary capitalize">{b.listingId?.type}</div>
+                                            </td>
+                                            <td className="p-5 font-black text-slate-900">${b.totalPrice}</td>
+                                            <td className="p-5">
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${b.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                                                    b.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                        'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                    {b.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-5 text-sm text-secondary font-medium">
+                                                {new Date(b.createdAt).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Pagination Controls */}
+                        <div className="p-5 flex items-center justify-between border-t border-border bg-slate-50/50">
+                            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                Page {page} of {totalPages}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={page === 1}
+                                    className="px-4 py-2 text-xs font-black uppercase tracking-widest border-2 border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all active:scale-95"
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={page === totalPages}
+                                    className="px-4 py-2 text-xs font-black uppercase tracking-widest bg-slate-900 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-200"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    </>
                 )}
             </div>
         </AdminLayout>

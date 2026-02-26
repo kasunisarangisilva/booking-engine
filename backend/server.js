@@ -11,28 +11,14 @@ connectDB();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Create HTTP server
-const server = http.createServer(app);
-
 const allowedOrigins = [
   'http://localhost:3000', // Widget dev
   'http://localhost:3001', // Admin panel dev
   'http://localhost:5173'  // Vite default dev
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost:')) {
-      return callback(null, true);
-    }
-    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-    return callback(new Error(msg), false);
-  }
-}));
-
-app.use(express.json());
+// Create HTTP server
+const server = http.createServer(app);
 
 // Initialize Socket.io
 const io = new Server(server, {
@@ -56,11 +42,30 @@ io.on('connection', (socket) => {
   });
 });
 
-// Make io accessible to our routers
+// Make io accessible for all routes including webhook
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
+
+const paymentController = require('./controllers/paymentController');
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost:')) {
+      return callback(null, true);
+    }
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  }
+}));
+
+// Stripe webhook must come before express.json()
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), paymentController.handleStripeWebhook);
+
+app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('Booking Engine API is running...');
@@ -71,12 +76,14 @@ const listingRoutes = require('./routes/listingRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/payments', paymentRoutes);
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

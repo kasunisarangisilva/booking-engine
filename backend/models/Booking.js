@@ -17,8 +17,18 @@ const bookingSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['confirmed', 'pending', 'cancelled'],
-        default: 'pending'
+        enum: ['confirmed', 'pending', 'cancelled', 'awaiting_payment'],
+        default: 'awaiting_payment'
+    },
+    paymentMethod: {
+        type: String,
+        enum: ['card', 'paypal', 'crypto', 'koko', 'mintpay'],
+        default: 'card'
+    },
+    paymentDetails: {
+        transactionId: String,
+        paymentStatus: String,
+        rawResponse: mongoose.Schema.Types.Mixed
     },
     totalPrice: {
         type: Number,
