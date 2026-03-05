@@ -22,6 +22,36 @@ export default function BookingEngine() {
     });
     const [showEmbed, setShowEmbed] = useState(false);
     const [showConfirmClose, setShowConfirmClose] = useState(false);
+    const [paymentStatus, setPaymentStatus] = useState(null); // 'success', 'cancel'
+
+    useEffect(() => {
+        // Check for Stripe success/cancel parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+
+        if (sessionId) {
+            console.log('[Widget] Payment success detected. Verifying Session:', sessionId);
+            const savedToken = localStorage.getItem('booking_token');
+            // Manually verify session status since webhooks might be slow/fail in dev
+            const verifySession = async () => {
+                try {
+                    await axios.post(`${API_BASE}/payments/verify-session`, { sessionId }, {
+                        headers: { 'Authorization': `Bearer ${savedToken}` }
+                    });
+                    console.log('[Widget] Session verification successful');
+                } catch (err) {
+                    console.error('[Widget] Session verification failed:', err);
+                }
+            };
+            verifySession();
+            setPaymentStatus('success');
+            setStep(6); // Confirmation step
+        } else if (window.location.pathname.includes('payment-cancel')) {
+            console.log('[Widget] Payment cancellation detected.');
+            setPaymentStatus('cancel');
+            setStep(5); // Stay on payment step
+        }
+    }, []);
 
     const nextStep = () => setStep(prev => prev + 1);
     const prevStep = () => setStep(prev => prev - 1);
@@ -113,6 +143,12 @@ export default function BookingEngine() {
                 const userObj = customerRes.data.user;
                 const userId = userObj?._id || userObj?.id;
                 const token = customerRes.data.token; // Extract token
+
+                // Persist token for redirect fallback
+                if (token) {
+                    localStorage.setItem('booking_token', token);
+                }
+
                 console.log('[Widget] User ID:', userId);
                 console.log('[Widget] Token:', token ? 'Received' : 'Missing');
 
@@ -128,7 +164,7 @@ export default function BookingEngine() {
                     throw new Error('Authentication token missing');
                 }
 
-                console.log('[Widget] Creating booking...');
+                console.log('[Widget] Creating booking (pending payment)...');
                 const bookingRes = await axios.post(`${API_BASE}/bookings`, {
                     listingId: listingId,
                     userId: userId,
@@ -136,6 +172,7 @@ export default function BookingEngine() {
                         ...formData.bookingDetails,
                         paymentMethod: formData.paymentMethod || 'card'
                     },
+                    paymentMethod: formData.paymentMethod || 'card',
                     totalPrice: selectedListing.price
                 }, {
                     headers: {
@@ -143,8 +180,31 @@ export default function BookingEngine() {
                     }
                 });
 
-                console.log('[Widget] Booking created:', bookingRes.data);
-                nextStep();
+                const bookingId = bookingRes.data._id;
+                console.log('[Widget] Booking created:', bookingId);
+
+                // Initiate payment redirect
+                let paymentRes;
+                if (formData.paymentMethod === 'koko') {
+                    paymentRes = await axios.post(`${API_BASE}/payments/koko/initiate`, { bookingId }, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } else if (formData.paymentMethod === 'mintpay') {
+                    paymentRes = await axios.post(`${API_BASE}/payments/mintpay/initiate`, { bookingId }, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } else {
+                    // Default to Stripe
+                    paymentRes = await axios.post(`${API_BASE}/payments/create-stripe-session`, { bookingId }, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                }
+
+                if (paymentRes.data.url || paymentRes.data.redirectUrl) {
+                    window.location.href = paymentRes.data.url || paymentRes.data.redirectUrl;
+                } else {
+                    nextStep();
+                }
             } catch (err) {
                 console.error('[Widget] Booking error:', err);
                 console.error('[Widget] Error response:', err.response?.data);

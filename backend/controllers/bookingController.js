@@ -4,7 +4,7 @@ const Notification = require('../models/Notification');
 
 exports.createBooking = async (req, res) => {
     try {
-        const { userId, listingId, details, totalPrice } = req.body;
+        const { userId, listingId, details, totalPrice, paymentMethod } = req.body;
         // In production: const userId = req.user.id; // Extract from JWT middleware
 
         // Verify listing exists
@@ -13,12 +13,13 @@ exports.createBooking = async (req, res) => {
             return res.status(404).json({ message: 'Listing not found' });
         }
 
-        // Create new booking
+        // Create new booking with awaiting_payment status
         const newBooking = new Booking({
             userId,
             listingId,
             details,
-            status: 'confirmed',
+            status: 'awaiting_payment',
+            paymentMethod: paymentMethod || 'card',
             totalPrice
         });
 
@@ -27,45 +28,6 @@ exports.createBooking = async (req, res) => {
         // Populate listing and user details
         await newBooking.populate('listingId', 'title type price');
         await newBooking.populate('userId', 'name email');
-
-        // --- Notification Logic ---
-
-        console.log('[Booking] Listing details:', {
-            listingId: listing._id,
-            listingTitle: listing.title,
-            vendorId: listing.vendorId,
-            vendorIdType: typeof listing.vendorId
-        });
-
-        // 1. For Admin
-        const adminNotif = new Notification({
-            recipient: 'admin',
-            type: 'new_booking',
-            message: `New booking for ${listing.title}`,
-            data: { bookingId: newBooking._id, listingId: listing._id }
-        });
-        await adminNotif.save();
-
-        req.io.to('admin').emit('notification', {
-            ...adminNotif.toObject(),
-            data: newBooking // Send full booking data for immediate UI update if needed
-        });
-
-        // 2. For Vendor
-        const vendorNotif = new Notification({
-            recipient: listing.vendorId.toString(), // Convert ObjectId to String
-            type: 'new_booking',
-            message: `New booking received for ${listing.title}`,
-            data: { bookingId: newBooking._id, listingId: listing._id }
-        });
-        await vendorNotif.save();
-
-        const vendorRoom = `vendor_${listing.vendorId}`;
-        console.log('[Booking] Emitting notification to vendor room:', vendorRoom, 'Vendor ID:', listing.vendorId);
-        req.io.to(vendorRoom).emit('notification', {
-            ...vendorNotif.toObject(),
-            data: newBooking
-        });
 
         res.status(201).json(newBooking);
     } catch (error) {
@@ -93,12 +55,24 @@ exports.getUserBookings = async (req, res) => {
 
 exports.getAllBookings = async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const totalBookings = await Booking.countDocuments();
         const bookings = await Booking.find()
             .populate('listingId', 'title type price vendorId')
             .populate('userId', 'name email')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        res.status(200).json(bookings);
+        res.status(200).json({
+            bookings,
+            total: totalBookings,
+            totalPages: Math.ceil(totalBookings / limit),
+            currentPage: page
+        });
     } catch (error) {
         console.error('Get all bookings error:', error);
         res.status(500).json({ message: 'Server error' });
@@ -108,24 +82,31 @@ exports.getAllBookings = async (req, res) => {
 exports.getVendorBookings = async (req, res) => {
     try {
         const vendorId = req.user._id;
-
-        // Find listings belonging to this vendor
-        // We need to look up bookings where the listingId -> vendorId matches current user.
-        // Option 1: Find all listings for vendor, then find bookings for those listings.
-        // Option 2: Populate and filter (less efficient but okay for now). 
-        // Better: Use aggregate or two queries.
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
         // Step 1: Get all listing IDs for this vendor
         const listings = await Listing.find({ vendorId }).select('_id');
         const listingIds = listings.map(l => l._id);
 
-        // Step 2: Find bookings for these listings
+        // Step 2: Count total bookings for these listings
+        const totalBookings = await Booking.countDocuments({ listingId: { $in: listingIds } });
+
+        // Step 3: Find paginated bookings for these listings
         const bookings = await Booking.find({ listingId: { $in: listingIds } })
             .populate('listingId', 'title type price location')
             .populate('userId', 'name email')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        res.status(200).json(bookings);
+        res.status(200).json({
+            bookings,
+            total: totalBookings,
+            totalPages: Math.ceil(totalBookings / limit),
+            currentPage: page
+        });
     } catch (error) {
         console.error('Get vendor bookings error:', error);
         res.status(500).json({ message: 'Server error' });
