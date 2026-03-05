@@ -10,11 +10,10 @@ class BookingWidget extends HTMLElement {
     container.id = 'booking-widget-container';
     shadow.appendChild(container);
 
-    // Style Injection: Copy specific widget styles to shadow root
+    // Style Injection: Copy widget styles to shadow root
     const injectStyles = () => {
-      // 1. Check for the specific CSS variable passed by loader
+      // 1. Production: CSS url passed by loader
       const cssUrl = window.__BOOKING_WIDGET_CSS__;
-
       if (cssUrl && !shadow.querySelector(`link[href="${cssUrl}"]`)) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -22,7 +21,7 @@ class BookingWidget extends HTMLElement {
         shadow.appendChild(link);
       }
 
-      // 2. In DEV mode, we still need to find Vite's injected styles
+      // 2. DEV mode: copy Vite injected styles
       if (import.meta.env.DEV) {
         const styles = document.querySelectorAll('style[data-vite-dev-id]');
         styles.forEach(style => {
@@ -38,7 +37,16 @@ class BookingWidget extends HTMLElement {
     if (import.meta.env.DEV) {
       setTimeout(injectStyles, 100);
     } else {
-      injectStyles(); // In production, we can run it immediately if loader set the var
+      injectStyles();
+    }
+
+    // Inject Google Fonts into the parent document head (not shadow DOM)
+    const fontLink = document.createElement('link');
+    fontLink.rel = 'stylesheet';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&family=Sora:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap';
+    if (!document.head.querySelector('link[data-widget-fonts]')) {
+      fontLink.setAttribute('data-widget-fonts', 'true');
+      document.head.appendChild(fontLink);
     }
 
     const root = ReactDOM.createRoot(container);

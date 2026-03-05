@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function AdminLogin() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const { login } = useAuth();
     const router = useRouter();
@@ -52,14 +54,29 @@ export default function AdminLogin() {
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-300 mb-1">Password</label>
-                            <input
-                                type="password"
-                                required
-                                className="appearance-none relative block w-full px-4 py-3 border border-slate-600 bg-slate-700 placeholder-slate-400 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                placeholder="Password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    required
+                                    className="appearance-none relative block w-full pl-4 pr-10 py-3 border border-slate-600 bg-slate-700 placeholder-slate-400 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-300 transition-colors"
+                                    tabIndex={-1}
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-5 w-5" aria-hidden="true" />
+                                    ) : (
+                                        <Eye className="h-5 w-5" aria-hidden="true" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
