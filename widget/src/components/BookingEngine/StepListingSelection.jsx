@@ -27,10 +27,10 @@ export default function StepListingSelection({ formData, updateFormData }) {
     const fetchListings = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_BASE}/listings`);
-            // Filter by selected business type
-            const filtered = res.data.filter(l => l.type === formData.businessType);
-            setListings(filtered);
+            // const res = await axios.get(`${API_BASE}/listings`);
+            // // Filter by selected business type
+            // const filtered = res.data.filter(l => l.type === formData.businessType);
+            // setListings(filtered);
 
             // Fetch with backend filtering by type and a high limit to ensure all listings are returned
             const res = await axios.get(`${API_BASE}/listings?type=${formData.businessType}&limit=100`);
@@ -118,17 +118,16 @@ export default function StepListingSelection({ formData, updateFormData }) {
                             <div
                                 key={listingId}
                                 onClick={() => updateFormData({ selectedListing: l })}
-                                className={`booking-option-card transform transition-all duration-300 p-5 md:p-6 ${isSelected ? 'selected scale-[1.02] bg-blue-50/50' : 'hover:scale-[1.01] hover:bg-slate-50'}`}
+                                className={`w-option-card ${isSelected ? 'selected' : ''}`}
                             >
-                                <div className="flex flex-col gap-1 md:gap-2">
-                                    <span className={`text-xl md:text-2xl font-black ${isSelected ? 'text-blue-900' : 'text-slate-800'}`}>{l.title}</span>
-                                    <span className="text-sm md:text-base text-slate-500 flex items-center gap-1 font-semibold">📍 {l.location}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                    <span style={{ fontSize: 20, fontWeight: 900, color: isSelected ? 'var(--w-accent)' : 'var(--w-text)' }}>{l.title}</span>
+                                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--w-text-muted)' }}>📍 {l.location}</span>
                                 </div>
 
-
-                                <div className="text-right">
-                                    <span className="block font-black text-2xl md:text-3xl text-blue-600">${l.price}</span>
-                                    <span className="text-[10px] md:text-sm text-slate-400 uppercase font-black tracking-tighter">Per {formData.businessType === 'hotel' || formData.businessType === 'hostel' ? 'Night' : 'Session'}</span>
+                                <div style={{ textAlign: 'right' }}>
+                                    <span style={{ display: 'block', fontSize: 24, fontWeight: 900, color: 'var(--w-accent)' }}>${l.price}</span>
+                                    <span style={{ display: 'block', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: 'var(--w-text-muted)', marginTop: 2 }}>Per {config.unit}</span>
                                 </div>
                             </div>
                         );
