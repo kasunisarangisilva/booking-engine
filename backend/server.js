@@ -1,20 +1,70 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const connectDB = require('./config/database');
+const http = require('http');
+const { Server } = require('socket.io');
+
+// Connect to MongoDB
+connectDB();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173']; // Local frontend and widget dev
+const allowedOrigins = [
+  'http://localhost:3000', // Widget dev
+  'http://localhost:3001', // Admin panel dev
+  'http://localhost:5173'  // Vite default dev
+];
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"]
+  }
+});
+
+// Socket.io connection handler
+io.on('connection', (socket) => {
+  console.log('New client connected:', socket.id);
+
+  socket.on('join_room', (room) => {
+    socket.join(room);
+    console.log(`User ${socket.id} joined room: ${room}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+// Make io accessible for all routes including webhook
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+const paymentController = require('./controllers/paymentController');
+
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost:')) {
+      return callback(null, true);
     }
-    return callback(null, true);
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
   }
 }));
+
+// Stripe webhook must come before express.json()
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), paymentController.handleStripeWebhook);
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -25,12 +75,16 @@ const authRoutes = require('./routes/authRoutes');
 const listingRoutes = require('./routes/listingRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/payments', paymentRoutes);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

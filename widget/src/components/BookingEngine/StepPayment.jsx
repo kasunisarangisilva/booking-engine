@@ -6,11 +6,6 @@ export default function StepPayment({ formData, updateFormData }) {
     const { isDark } = useTheme();
 
     const paymentMethods = [
-<<<<<<< Updated upstream
-        { id: 'card', name: 'Credit / Debit Card', icon: '💳', desc: 'Secure payment via Stripe' },
-        { id: 'paypal', name: 'PayPal', icon: '🅿️', desc: 'Fast and safe electronic payments' },
-        { id: 'crypto', name: 'Cryptocurrency', icon: '₿', desc: 'Pay with BTC, ETH or USDC' }
-=======
         {
             id: 'card',
             name: 'Credit / Debit Card',
@@ -36,7 +31,10 @@ export default function StepPayment({ formData, updateFormData }) {
             imgAlt: 'Mint Pay',
             badge: null,
         },
->>>>>>> Stashed changes
+
+        { id: 'koko', name: 'Koko Pay', icon: <img src="/images/koko-logo.png" alt="Koko" className="w-12 h-auto" />, desc: 'Split into 3 installments' },
+        { id: 'mintpay', name: 'Mint Pay', icon: <img src="/images/mintpay-logo.png" alt="Mint Pay" className="w-16 h-auto" />, desc: 'Shop now, pay later' }
+
     ];
 
     const handleSelect = (id) => {
@@ -149,21 +147,9 @@ export default function StepPayment({ formData, updateFormData }) {
                     Select payment method
                 </div>
 
-<<<<<<< Updated upstream
-                        {selectedMethod === 'card' && method.id === 'card' && (
-                            <div className="mt-6 md:mt-8 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                                <div className="grid grid-cols-1 gap-4">
-                                    <input type="text" placeholder="Card Number" className="w-full text-base md:text-lg p-4 md:p-5 bg-white shadow-inner border-slate-100 rounded-2xl" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input type="text" placeholder="MM/YY" className="w-full text-base md:text-lg p-4 md:p-5 bg-white shadow-inner border-slate-100 rounded-2xl" />
-                                    <input type="text" placeholder="CVC" className="w-full text-base md:text-lg p-4 md:p-5 bg-white shadow-inner border-slate-100 rounded-2xl" />
-                                </div>
-                            </div>
-                        )}
                     </div>
                 ))}
-=======
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {paymentMethods.map(method => {
                         const isSelected = selectedMethod === method.id;
@@ -220,7 +206,7 @@ export default function StepPayment({ formData, updateFormData }) {
                 }}>
                     By continuing, you agree to our Terms of Service and Privacy Policy.
                 </p>
->>>>>>> Stashed changes
+
             </div>
         </div>
     );

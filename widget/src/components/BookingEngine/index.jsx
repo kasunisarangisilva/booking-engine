@@ -56,21 +56,11 @@ function BookingEngineInner() {
         paymentMethod: 'card'
     });
     const [showConfirmClose, setShowConfirmClose] = useState(false);
-<<<<<<< Updated upstream
-=======
-    const [paymentStatus, setPaymentStatus] = useState(null);
-    const [isProcessing, setIsProcessing] = useState(false);
-
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('session_id');
-        if (sessionId) {
-            const savedToken = localStorage.getItem('booking_token');
-            (async () => {
                 try {
                     await axios.post(`${API_BASE}/payments/verify-session`, { sessionId }, {
                         headers: { 'Authorization': `Bearer ${savedToken}` }
                     });
+
                 } catch (err) {
                     console.error('[Widget] Session verification failed:', err);
                 }
@@ -82,7 +72,22 @@ function BookingEngineInner() {
             setStep(5);
         }
     }, []);
->>>>>>> Stashed changes
+
+                    console.log('[Widget] Session verification successful');
+                } catch (err) {
+                    console.error('[Widget] Session verification failed:', err);
+                }
+            };
+            verifySession();
+            setPaymentStatus('success');
+            setStep(6); // Confirmation step
+        } else if (window.location.pathname.includes('payment-cancel')) {
+            console.log('[Widget] Payment cancellation detected.');
+            setPaymentStatus('cancel');
+            setStep(5); // Stay on payment step
+        }
+    }, []);
+
 
     const nextStep = () => setStep(prev => prev + 1);
     const prevStep = () => setStep(prev => prev - 1);
@@ -99,24 +104,14 @@ function BookingEngineInner() {
         if (step === 5) {
             setIsProcessing(true);
             try {
-<<<<<<< Updated upstream
                 // In a real app, this would initiate the payment gateway
                 await axios.post(`${API_BASE}/bookings`, {
                     listingId: formData.selectedListing.id,
-=======
-                // Always create a UNIQUE guest account so we never conflict
-                // with an existing user's password. The real email goes into
-                // booking details for communication purposes only.
-                const guestEmail = `widget_${Date.now()}_${Math.random().toString(36).slice(2)}@guest.internal`;
-                const customerRes = await axios.post(`${API_BASE}/auth/signup`, {
-                    name: formData.name || 'Guest User',
-                    email: guestEmail,
-                    password: 'widgetGuest@2025!',
-                    role: 'user'
                 });
 
                 const userObj = customerRes.data.user;
                 const userId = userObj?._id || userObj?.id;
+
                 const token = customerRes.data.token;
                 if (token) localStorage.setItem('booking_token', token);
 
@@ -126,34 +121,62 @@ function BookingEngineInner() {
 
                 const bookingRes = await axios.post(`${API_BASE}/bookings`, {
                     listingId, userId,
->>>>>>> Stashed changes
+
+
+                const token = customerRes.data.token; // Extract token
+
+                // Persist token for redirect fallback
+                if (token) {
+                    localStorage.setItem('booking_token', token);
+                }
+
+                console.log('[Widget] User ID:', userId);
+                console.log('[Widget] Token:', token ? 'Received' : 'Missing');
+
+                const selectedListing = formData.selectedListing;
+                const listingId = selectedListing?._id || selectedListing?.id;
+                console.log('[Widget] Listing ID:', listingId);
+
+                if (!userId || !listingId) {
+                    throw new Error(`Missing IDs: User(${userId}), Listing(${listingId})`);
+                }
+
+                if (!token) {
+                    throw new Error('Authentication token missing');
+                }
+
+                console.log('[Widget] Creating booking (pending payment)...');
+                const bookingRes = await axios.post(`${API_BASE}/bookings`, {
+                    listingId: listingId,
+                    userId: userId,
+
                     details: {
                         ...formData.bookingDetails,
                         paymentMethod: formData.paymentMethod || 'card',
                         customerEmail: formData.email || '',  // real contact email
                         customerName: formData.name || 'Guest',
                     },
-<<<<<<< Updated upstream
                     totalPrice: formData.selectedListing.price
                 });
-                nextStep();
-            } catch (err) {
-                alert('Payment/Booking failed. Please try again.');
-                console.error(err);
-=======
-                    paymentMethod: formData.paymentMethod || 'card',
-                    totalPrice: selectedListing.price
-                }, { headers: { 'Authorization': `Bearer ${token}` } });
 
                 const bookingId = bookingRes.data._id;
+                console.log('[Widget] Booking created:', bookingId);
 
+                // Initiate payment redirect
                 let paymentRes;
                 if (formData.paymentMethod === 'koko') {
-                    paymentRes = await axios.post(`${API_BASE}/payments/koko/initiate`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                    paymentRes = await axios.post(`${API_BASE}/payments/koko/initiate`, { bookingId }, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
                 } else if (formData.paymentMethod === 'mintpay') {
-                    paymentRes = await axios.post(`${API_BASE}/payments/mintpay/initiate`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                    paymentRes = await axios.post(`${API_BASE}/payments/mintpay/initiate`, { bookingId }, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
                 } else {
-                    paymentRes = await axios.post(`${API_BASE}/payments/create-stripe-session`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                    // Default to Stripe
+                    paymentRes = await axios.post(`${API_BASE}/payments/create-stripe-session`, { bookingId }, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
                 }
 
                 if (paymentRes.data.url || paymentRes.data.redirectUrl) {
@@ -162,35 +185,22 @@ function BookingEngineInner() {
                     nextStep();
                 }
             } catch (err) {
-                const msg = err.response?.data?.message || err.message || 'Unknown error';
-                alert(`Payment/Booking failed: ${msg}`);
-            } finally {
-                setIsProcessing(false);
->>>>>>> Stashed changes
+                alert('Payment/Booking failed. Please try again.');
+                console.error(err);
+
+                console.error('[Widget] Booking error:', err);
+                console.error('[Widget] Error response:', err.response?.data);
+
+                const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+                alert(`Payment/Booking failed: ${errorMessage}`);
+
             }
         } else {
             nextStep();
         }
     };
 
-<<<<<<< Updated upstream
-=======
-    const renderStep = () => {
-        switch (step) {
-            case 1: return <StepTypeSelection formData={formData} updateFormData={updateFormData} />;
-            case 2: return <StepDetails formData={formData} updateFormData={updateFormData} />;
-            case 3: return <StepListingSelection formData={formData} updateFormData={updateFormData} />;
-            case 4: return <StepBookingUI formData={formData} updateFormData={updateFormData} />;
-            case 5: return <StepPayment formData={formData} updateFormData={updateFormData} />;
-            case 6: return <ConfirmationStep formData={formData} onRestart={() => { setStep(1); setFormData({ businessType: '', name: '', email: '', propertyType: '', rooms: '', country: 'Singapore', selectedListing: null, bookingDetails: {}, paymentMethod: 'card' }); }} />;
-            default: return <StepTypeSelection formData={formData} updateFormData={updateFormData} />;
-        }
-    };
 
-    const progressPct = step <= TOTAL_STEPS ? ((step - 1) / TOTAL_STEPS) * 100 : 100;
-    const cssVars = getCSSVars();
-
->>>>>>> Stashed changes
     return (
         <div className="booking-engine-root" style={cssVars}>
             {/* Theme Panel */}
