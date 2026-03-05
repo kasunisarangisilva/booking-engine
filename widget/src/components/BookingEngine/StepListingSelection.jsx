@@ -1,22 +1,42 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useTheme } from './ThemeContext';
 
 const API_BASE = 'http://localhost:5000/api';
+
+const TYPE_CONFIG = {
+    hotel: { icon: '🏨', unit: 'Night' },
+    hostel: { icon: '🏠', unit: 'Night' },
+    cinema: { icon: '🎬', unit: 'Ticket' },
+    vehicle: { icon: '🚗', unit: 'Day' },
+    space: { icon: '🏢', unit: 'Hour' },
+};
 
 export default function StepListingSelection({ formData, updateFormData }) {
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
+    const { isDark } = useTheme();
+
+    const config = TYPE_CONFIG[formData.businessType] || { icon: '📋', unit: 'Session' };
 
     useEffect(() => {
         fetchListings();
     }, [formData.businessType]);
 
     const fetchListings = async () => {
+        setLoading(true);
         try {
+            // const res = await axios.get(`${API_BASE}/listings`);
+            // // Filter by selected business type
+            // const filtered = res.data.filter(l => l.type === formData.businessType);
+            // setListings(filtered);
+
             // Fetch with backend filtering by type and a high limit to ensure all listings are returned
             const res = await axios.get(`${API_BASE}/listings?type=${formData.businessType}&limit=100`);
             const allListings = res.data.listings || [];
             setListings(allListings);
+
         } catch (err) {
             console.error(err);
         } finally {
@@ -24,22 +44,62 @@ export default function StepListingSelection({ formData, updateFormData }) {
         }
     };
 
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center p-20 space-y-6">
-            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-2xl font-black text-slate-800 animate-pulse uppercase tracking-widest">Finding available {formData.businessType}s...</p>
-        </div>
+    const filtered = listings.filter(l =>
+        l.title?.toLowerCase().includes(search.toLowerCase()) ||
+        l.location?.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
-        <div className="booking-step-content">
-            <div className="text-center lg:text-left py-4 lg:py-0 self-center">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-4 lg:mb-6 flex flex-col lg:flex-row items-center gap-3 lg:gap-6 text-slate-900 tracking-tight leading-tight">
-                    Select <span className="text-blue-500 uppercase">{formData.businessType}</span>
+        <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 32,
+            alignItems: 'start',
+            width: '100%',
+        }}>
+            {/* Left */}
+            <div>
+                <div className="w-badge" style={{ marginBottom: 20 }}>Step 3 of 5</div>
+                <h1 style={{
+                    fontSize: 'clamp(32px, 4.5vw, 60px)',
+                    fontWeight: 900,
+                    letterSpacing: '-0.04em',
+                    lineHeight: 1.05,
+                    color: 'var(--w-text)',
+                    marginBottom: 16,
+                }}>
+                    Choose your<br />
+                    <span style={{ color: 'var(--w-accent)' }}>
+                        {config.icon} {formData.businessType}
+                    </span>
                 </h1>
-                <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-slate-500 font-semibold leading-relaxed max-w-xl mx-auto lg:mx-0">
-                    Choose one of our premium options to experience top-tier service.
+                <p style={{
+                    fontSize: 'clamp(14px, 1.5vw, 18px)',
+                    color: 'var(--w-text-muted)',
+                    fontWeight: 500,
+                    lineHeight: 1.7,
+                }}>
+                    Browse our premium selection and pick the perfect option for your stay.
                 </p>
+
+                {/* Stats bar */}
+                {!loading && (
+                    <div className="w-glass-card" style={{ padding: '16px 20px', marginTop: 32, display: 'flex', gap: 24 }}>
+                        <div>
+                            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--w-accent)' }}>{listings.length}</div>
+                            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--w-text-muted)' }}>Available</div>
+                        </div>
+                        <div style={{ width: 1, background: 'var(--w-border)' }} />
+                        <div>
+                            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--w-text)' }}>
+                                {listings.length > 0
+                                    ? `$${Math.min(...listings.map(l => l.price || 0))}`
+                                    : '—'}
+                            </div>
+                            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--w-text-muted)' }}>From</div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="space-y-4 max-h-[50vh] lg:max-h-[60vh] overflow-y-auto pr-2 md:pr-4 custom-scrollbar w-full max-w-lg mx-auto lg:ml-auto">
@@ -58,17 +118,16 @@ export default function StepListingSelection({ formData, updateFormData }) {
                             <div
                                 key={listingId}
                                 onClick={() => updateFormData({ selectedListing: l })}
-                                className={`booking-option-card transform transition-all duration-300 p-5 md:p-6 ${isSelected ? 'selected scale-[1.02] bg-blue-50/50' : 'hover:scale-[1.01] hover:bg-slate-50'}`}
+                                className={`w-option-card ${isSelected ? 'selected' : ''}`}
                             >
-                                <div className="flex flex-col gap-1 md:gap-2">
-                                    <span className={`text-xl md:text-2xl font-black ${isSelected ? 'text-blue-900' : 'text-slate-800'}`}>{l.title}</span>
-                                    <span className="text-sm md:text-base text-slate-500 flex items-center gap-1 font-semibold">📍 {l.location}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                    <span style={{ fontSize: 20, fontWeight: 900, color: isSelected ? 'var(--w-accent)' : 'var(--w-text)' }}>{l.title}</span>
+                                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--w-text-muted)' }}>📍 {l.location}</span>
                                 </div>
 
-
-                                <div className="text-right">
-                                    <span className="block font-black text-2xl md:text-3xl text-blue-600">${l.price}</span>
-                                    <span className="text-[10px] md:text-sm text-slate-400 uppercase font-black tracking-tighter">Per {formData.businessType === 'hotel' || formData.businessType === 'hostel' ? 'Night' : 'Session'}</span>
+                                <div style={{ textAlign: 'right' }}>
+                                    <span style={{ display: 'block', fontSize: 24, fontWeight: 900, color: 'var(--w-accent)' }}>${l.price}</span>
+                                    <span style={{ display: 'block', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: 'var(--w-text-muted)', marginTop: 2 }}>Per {config.unit}</span>
                                 </div>
                             </div>
                         );
