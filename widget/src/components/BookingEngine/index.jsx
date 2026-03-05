@@ -1,18 +1,53 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { ThemeProvider, useTheme } from './ThemeContext';
+import ThemeSettingsPanel from './ThemeSettingsPanel';
 import StepTypeSelection from './StepTypeSelection';
 import StepDetails from './StepDetails';
 import StepListingSelection from './StepListingSelection';
 import StepBookingUI from './StepBookingUI';
 import StepPayment from './StepPayment';
-import axios from 'axios';
 
 const API_BASE = 'http://localhost:5000/api';
 
+const STEP_LABELS = ['Type', 'Info', 'Select', 'Book', 'Pay'];
+const TOTAL_STEPS = 5;
+
+// Parse widget HTML attributes for theming
+function getWidgetAttrs() {
+    try {
+        const el = document.querySelector('booking-engine');
+        if (!el) return {};
+        return {
+            theme: el.getAttribute('data-theme') || 'ocean',
+            font: el.getAttribute('data-font') || 'inter',
+            radius: el.getAttribute('data-radius') || 'round',
+            accent: el.getAttribute('data-accent') || null,
+        };
+    } catch { return {}; }
+}
+
 export default function BookingEngine() {
+    const attrs = getWidgetAttrs();
+    return (
+        <ThemeProvider
+            initialTheme={attrs.theme || 'ocean'}
+            initialFont={attrs.font || 'inter'}
+            initialRadius={attrs.radius || 'round'}
+            customAccent={attrs.accent}
+        >
+            <BookingEngineInner />
+        </ThemeProvider>
+    );
+}
+
+function BookingEngineInner() {
+    const { getCSSVars, isDark, showPanel, setShowPanel } = useTheme();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         businessType: '',
         name: '',
+        email: '',
         propertyType: '',
         rooms: '',
         country: 'Singapore',
@@ -20,164 +55,479 @@ export default function BookingEngine() {
         bookingDetails: {},
         paymentMethod: 'card'
     });
-    const [showEmbed, setShowEmbed] = useState(false);
     const [showConfirmClose, setShowConfirmClose] = useState(false);
+<<<<<<< Updated upstream
+=======
+    const [paymentStatus, setPaymentStatus] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        if (sessionId) {
+            const savedToken = localStorage.getItem('booking_token');
+            (async () => {
+                try {
+                    await axios.post(`${API_BASE}/payments/verify-session`, { sessionId }, {
+                        headers: { 'Authorization': `Bearer ${savedToken}` }
+                    });
+                } catch (err) {
+                    console.error('[Widget] Session verification failed:', err);
+                }
+            })();
+            setPaymentStatus('success');
+            setStep(6);
+        } else if (window.location.pathname.includes('payment-cancel')) {
+            setPaymentStatus('cancel');
+            setStep(5);
+        }
+    }, []);
+>>>>>>> Stashed changes
 
     const nextStep = () => setStep(prev => prev + 1);
     const prevStep = () => setStep(prev => prev - 1);
+    const updateFormData = (newData) => setFormData(prev => ({ ...prev, ...newData }));
 
-    const updateFormData = (newData) => {
-        setFormData(prev => ({ ...prev, ...newData }));
-    };
-
-    const renderStep = () => {
-        switch (step) {
-            case 1:
-                return <StepTypeSelection formData={formData} updateFormData={updateFormData} />;
-            case 2:
-                return <StepDetails formData={formData} updateFormData={updateFormData} />;
-            case 3:
-                return <StepListingSelection formData={formData} updateFormData={updateFormData} />;
-            case 4:
-                return <StepBookingUI formData={formData} updateFormData={updateFormData} />;
-            case 5:
-                return <StepPayment formData={formData} updateFormData={updateFormData} />;
-            case 6:
-                return (
-                    <div className="text-center space-y-6 max-w-2xl px-4">
-                        <div className="w-20 h-20 md:w-28 md:h-28 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl md:text-6xl mx-auto mb-8 animate-bounce shadow-lg shadow-green-200">
-                            ✓
-                        </div>
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight">Booking Confirmed!</h1>
-                        <p className="text-lg md:text-2xl text-slate-600 font-medium">Your stay at <span className="text-blue-600 font-black">{formData.selectedListing?.title}</span> has been successfully processed.</p>
-
-                        <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
-                            <button onClick={() => setStep(1)} className="btn btn-primary bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
-                                Make Another Booking
-                            </button>
-                            <button onClick={() => setShowEmbed(!showEmbed)} className="btn bg-slate-100 px-10 py-4 rounded-2xl font-bold text-slate-700 hover:bg-slate-200 transition-all">
-                                {showEmbed ? 'Hide Embed Code' : 'Get Embed Code'}
-                            </button>
-                        </div>
-
-                        {showEmbed && (
-                            <div className="mt-8 text-left animate-in slide-in-from-bottom-4 duration-500">
-                                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Add this to your website</h3>
-                                <div className="embed-code-card">
-                                    <code>{`<!-- 1. Add this script once to your <head> or before </body> -->
-<script src="https://booking-engine-widget.vercel.app/loader.js"></script>
-
-<!-- 2. Place this tag where you want the widget to appear -->
-<booking-engine data-account-id="YOUR_ACCOUNT_ID"></booking-engine>`}</code>
-                                    <div className="copy-badge" onClick={() => {
-                                        const code = `<script src="https://booking-engine-widget.vercel.app/loader.js"></script>\n<booking-engine data-account-id="YOUR_ACCOUNT_ID"></booking-engine>`;
-                                        navigator.clipboard.writeText(code);
-                                        alert('Copied to clipboard!');
-                                    }}>Copy</div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
-            default:
-                return <StepTypeSelection formData={formData} updateFormData={updateFormData} />;
-        }
+    const canProceed = () => {
+        if (step === 1) return !!formData.businessType;
+        if (step === 2) return !!formData.name && !!formData.email;
+        if (step === 3) return !!formData.selectedListing;
+        return true;
     };
 
     const handleConfirm = async () => {
         if (step === 5) {
+            setIsProcessing(true);
             try {
+<<<<<<< Updated upstream
                 // In a real app, this would initiate the payment gateway
                 await axios.post(`${API_BASE}/bookings`, {
                     listingId: formData.selectedListing.id,
+=======
+                // Always create a UNIQUE guest account so we never conflict
+                // with an existing user's password. The real email goes into
+                // booking details for communication purposes only.
+                const guestEmail = `widget_${Date.now()}_${Math.random().toString(36).slice(2)}@guest.internal`;
+                const customerRes = await axios.post(`${API_BASE}/auth/signup`, {
+                    name: formData.name || 'Guest User',
+                    email: guestEmail,
+                    password: 'widgetGuest@2025!',
+                    role: 'user'
+                });
+
+                const userObj = customerRes.data.user;
+                const userId = userObj?._id || userObj?.id;
+                const token = customerRes.data.token;
+                if (token) localStorage.setItem('booking_token', token);
+
+                const selectedListing = formData.selectedListing;
+                const listingId = selectedListing?._id || selectedListing?.id;
+                if (!userId || !listingId || !token) throw new Error('Missing required data');
+
+                const bookingRes = await axios.post(`${API_BASE}/bookings`, {
+                    listingId, userId,
+>>>>>>> Stashed changes
                     details: {
                         ...formData.bookingDetails,
-                        paymentMethod: formData.paymentMethod || 'card'
+                        paymentMethod: formData.paymentMethod || 'card',
+                        customerEmail: formData.email || '',  // real contact email
+                        customerName: formData.name || 'Guest',
                     },
+<<<<<<< Updated upstream
                     totalPrice: formData.selectedListing.price
                 });
                 nextStep();
             } catch (err) {
                 alert('Payment/Booking failed. Please try again.');
                 console.error(err);
+=======
+                    paymentMethod: formData.paymentMethod || 'card',
+                    totalPrice: selectedListing.price
+                }, { headers: { 'Authorization': `Bearer ${token}` } });
+
+                const bookingId = bookingRes.data._id;
+
+                let paymentRes;
+                if (formData.paymentMethod === 'koko') {
+                    paymentRes = await axios.post(`${API_BASE}/payments/koko/initiate`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                } else if (formData.paymentMethod === 'mintpay') {
+                    paymentRes = await axios.post(`${API_BASE}/payments/mintpay/initiate`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                } else {
+                    paymentRes = await axios.post(`${API_BASE}/payments/create-stripe-session`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                }
+
+                if (paymentRes.data.url || paymentRes.data.redirectUrl) {
+                    window.location.href = paymentRes.data.url || paymentRes.data.redirectUrl;
+                } else {
+                    nextStep();
+                }
+            } catch (err) {
+                const msg = err.response?.data?.message || err.message || 'Unknown error';
+                alert(`Payment/Booking failed: ${msg}`);
+            } finally {
+                setIsProcessing(false);
+>>>>>>> Stashed changes
             }
         } else {
             nextStep();
         }
     };
 
+<<<<<<< Updated upstream
+=======
+    const renderStep = () => {
+        switch (step) {
+            case 1: return <StepTypeSelection formData={formData} updateFormData={updateFormData} />;
+            case 2: return <StepDetails formData={formData} updateFormData={updateFormData} />;
+            case 3: return <StepListingSelection formData={formData} updateFormData={updateFormData} />;
+            case 4: return <StepBookingUI formData={formData} updateFormData={updateFormData} />;
+            case 5: return <StepPayment formData={formData} updateFormData={updateFormData} />;
+            case 6: return <ConfirmationStep formData={formData} onRestart={() => { setStep(1); setFormData({ businessType: '', name: '', email: '', propertyType: '', rooms: '', country: 'Singapore', selectedListing: null, bookingDetails: {}, paymentMethod: 'card' }); }} />;
+            default: return <StepTypeSelection formData={formData} updateFormData={updateFormData} />;
+        }
+    };
+
+    const progressPct = step <= TOTAL_STEPS ? ((step - 1) / TOTAL_STEPS) * 100 : 100;
+    const cssVars = getCSSVars();
+
+>>>>>>> Stashed changes
     return (
-        <div className="booking-engine-container">
-            <header className="absolute top-0 left-0 right-0 p-8 flex justify-end z-[60]">
-                <button
-                    onClick={() => setShowConfirmClose(true)}
-                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/50 backdrop-blur-md text-slate-400 hover:text-slate-900 hover:bg-white transition-all cursor-pointer shadow-sm border border-white/20"
-                >
-                    <span className="text-3xl">×</span>
-                </button>
+        <div className="booking-engine-root" style={cssVars}>
+            {/* Theme Panel */}
+            <ThemeSettingsPanel />
+
+            {/* Header */}
+            <header style={{
+                position: 'absolute', top: 0, left: 0, right: 0, zIndex: 60,
+                padding: '20px 24px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+                {/* Logo / Brand */}
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: 'var(--w-glass)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid var(--w-border)',
+                    borderRadius: 'var(--w-radius)',
+                    padding: '8px 16px',
+                    boxShadow: 'var(--w-shadow)',
+                }}>
+                    <div style={{
+                        width: 28, height: 28, borderRadius: '50%',
+                        background: 'var(--w-accent)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 14,
+                    }}>🗓</div>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--w-text)', letterSpacing: '0.04em' }}>
+                        BookEngine
+                    </span>
+                </div>
+
+                {/* Right controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {/* Theme toggle button */}
+                    <button
+                        onClick={() => setShowPanel(true)}
+                        title="Customize Theme"
+                        style={{
+                            width: 40, height: 40, borderRadius: 'calc(var(--w-radius) * 0.6)',
+                            border: '1px solid var(--w-border)',
+                            background: 'var(--w-glass)',
+                            backdropFilter: 'blur(12px)',
+                            cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 18,
+                            boxShadow: 'var(--w-shadow)',
+                            transition: 'all var(--w-transition)',
+                            color: 'var(--w-text)',
+                        }}
+                    >
+                        🎨
+                    </button>
+
+                    {/* Close button */}
+                    <button
+                        onClick={() => setShowConfirmClose(true)}
+                        style={{
+                            width: 40, height: 40, borderRadius: 'calc(var(--w-radius) * 0.6)',
+                            border: '1px solid var(--w-border)',
+                            background: 'var(--w-glass)',
+                            backdropFilter: 'blur(12px)',
+                            cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 22, fontWeight: 400,
+                            color: 'var(--w-text-muted)',
+                            boxShadow: 'var(--w-shadow)',
+                            transition: 'all var(--w-transition)',
+                        }}
+                    >
+                        ×
+                    </button>
+                </div>
             </header>
 
+            {/* Progress bar — thin strip at very top */}
+            <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, zIndex: 70,
+                height: 3
+            }}>
+                <div className="w-progress-fill" style={{ width: `${progressPct}%` }} />
+            </div>
+
+            {/* Confirm close modal */}
             {showConfirmClose && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowConfirmClose(false)} />
-                    <div className="bg-white rounded-3xl p-10 max-w-md w-full relative z-10 shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
-                        <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center text-5xl mb-6 mx-auto">⚠️</div>
-                        <h3 className="text-3xl font-black text-slate-800 text-center mb-3 tracking-tight">Are you sure?</h3>
-                        <p className="text-slate-500 text-center mb-10 text-lg font-medium leading-relaxed">
-                            Closing the booking engine will lose all your progress. Are you sure you want to exit?
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 110,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+                }}>
+                    <div
+                        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+                        onClick={() => setShowConfirmClose(false)}
+                    />
+                    <div className="w-step-enter-fast" style={{
+                        background: 'var(--w-surface)',
+                        borderRadius: 'var(--w-radius)',
+                        padding: 40,
+                        maxWidth: 400, width: '100%',
+                        position: 'relative', zIndex: 1,
+                        boxShadow: '0 32px 64px rgba(0,0,0,0.25)',
+                        border: '1px solid var(--w-border)',
+                        textAlign: 'center',
+                    }}>
+                        <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+                        <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--w-text)', marginBottom: 8 }}>Leave booking?</h3>
+                        <p style={{ color: 'var(--w-text-muted)', fontSize: 15, fontWeight: 500, marginBottom: 32, lineHeight: 1.6 }}>
+                            Your progress will be lost. Are you sure you want to exit?
                         </p>
-                        <div className="flex flex-col gap-4">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                             <button
                                 onClick={() => window.location.href = '/'}
-                                className="w-full py-5 bg-red-500 text-white font-black rounded-2xl hover:bg-red-600 transition-all shadow-xl shadow-red-200 active:scale-95 text-lg"
+                                style={{
+                                    padding: '14px', borderRadius: 'var(--w-radius-sm)',
+                                    background: '#ef4444', color: 'white',
+                                    fontWeight: 800, fontSize: 15, border: 'none',
+                                    cursor: 'pointer', transition: 'all 0.2s',
+                                    fontFamily: 'var(--w-font)',
+                                }}
                             >
-                                Yes, close
+                                Yes, exit
                             </button>
                             <button
                                 onClick={() => setShowConfirmClose(false)}
-                                className="w-full py-5 bg-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-200 transition-all active:scale-95 text-lg"
+                                style={{
+                                    padding: '14px', borderRadius: 'var(--w-radius-sm)',
+                                    background: 'var(--w-input-bg)',
+                                    color: 'var(--w-text)', fontWeight: 700, fontSize: 15,
+                                    border: '1px solid var(--w-border)',
+                                    cursor: 'pointer', transition: 'all 0.2s',
+                                    fontFamily: 'var(--w-font)',
+                                }}
                             >
-                                No, stay here
+                                Stay here
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            <main className="booking-wizard-card">
-                <div key={step} className="step-transition w-full flex justify-center">
+            {/* Main content */}
+            <main style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '100px 24px 24px',
+                overflowY: 'auto',
+            }}>
+                <div key={step} className="w-step-enter" style={{ width: '100%', maxWidth: 1100 }}>
                     {renderStep()}
                 </div>
             </main>
 
-            <footer className="booking-footer">
-                <div className="w-1/3 flex items-center">
-                    {step > 1 && (
-                        <button onClick={prevStep} className="group flex items-center gap-3 font-black text-slate-400 hover:text-blue-600 transition-all uppercase tracking-widest text-sm">
-                            <span className="text-2xl transition-transform group-hover:-translate-x-1">←</span> Back
-                        </button>
-                    )}
-                </div>
+            {/* Footer */}
+            {step <= TOTAL_STEPS && (
+                <footer className="w-footer">
+                    {/* Back */}
+                    <div style={{ flex: 1 }}>
+                        {step > 1 && (
+                            <button
+                                onClick={prevStep}
+                                style={{
+                                    background: 'none', border: 'none',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                                    fontWeight: 800, fontSize: 13,
+                                    letterSpacing: '0.12em', textTransform: 'uppercase',
+                                    color: 'var(--w-text-muted)',
+                                    fontFamily: 'var(--w-font)',
+                                    transition: 'all var(--w-transition)',
+                                    padding: 0,
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--w-accent)'; e.currentTarget.querySelector('span').style.transform = 'translateX(-4px)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--w-text-muted)'; e.currentTarget.querySelector('span').style.transform = 'translateX(0)'; }}
+                            >
+                                <span style={{ fontSize: 20, transition: 'transform 0.2s' }}>←</span>
+                                Back
+                            </button>
+                        )}
+                    </div>
 
-                <div className="w-1/3 flex justify-center">
-                    <div className="flex gap-3">
-                        {[1, 2, 3, 4, 5].map(s => (
-                            <div key={s} className={`step-dot ${step === s ? 'active' : ''}`} />
+                    {/* Step dots */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+                        {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+                            <div
+                                key={i}
+                                className={`w-step-dot ${step === i + 1 ? 'active' : step > i + 1 ? 'done' : ''}`}
+                            />
                         ))}
                     </div>
-                </div>
 
-                <div className="w-1/3 flex justify-end">
-                    <button
-                        onClick={handleConfirm}
-                        className="btn-next group"
-                        disabled={step === 6}
-                    >
-                        <span className="uppercase tracking-[0.2em]">{step === 5 ? 'Purchase' : step === 6 ? 'Done' : 'Next'}</span>
-                        {step < 6 && <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>}
-                    </button>
+                    {/* Next / Purchase */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                            onClick={handleConfirm}
+                            disabled={!canProceed() || isProcessing}
+                            className="w-btn-next"
+                            style={{ borderRadius: 0 }}
+                        >
+                            {isProcessing ? (
+                                <>
+                                    <div style={{
+                                        width: 18, height: 18, borderRadius: '50%',
+                                        border: '3px solid rgba(255,255,255,0.3)',
+                                        borderTopColor: 'white',
+                                        animation: 'w-spin 0.8s linear infinite',
+                                    }} />
+                                    Processing…
+                                </>
+                            ) : (
+                                <>
+                                    <span>{step === 5 ? 'Purchase' : 'Continue'}</span>
+                                    <span style={{ fontSize: 20, transition: 'transform 0.2s' }}>→</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </footer>
+            )}
+        </div>
+    );
+}
+
+function ConfirmationStep({ formData, onRestart }) {
+    const [showEmbed, setShowEmbed] = useState(false);
+    const { themeKey, fontId, radiusId } = useTheme();
+
+    const embedCode = `<!-- BookEngine Widget -->
+<script src="https://booking-engine-widget.vercel.app/loader.js"></script>
+<booking-engine
+  data-account-id="YOUR_ACCOUNT_ID"
+  data-theme="${themeKey}"
+  data-font="${fontId}"
+  data-radius="${radiusId}"
+></booking-engine>`;
+
+    return (
+        <div className="w-step-enter" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto', padding: '0 16px' }}>
+            {/* Animated success icon */}
+            <div style={{
+                width: 100, height: 100,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 44,
+                margin: '0 auto 32px',
+                boxShadow: '0 16px 48px rgba(22,163,74,0.4)',
+                animation: 'w-bounce 1.2s ease infinite',
+            }}>
+                ✓
+            </div>
+
+            <h1 style={{
+                fontSize: 'clamp(32px, 5vw, 56px)',
+                fontWeight: 900,
+                color: 'var(--w-text)',
+                marginBottom: 12,
+                letterSpacing: '-0.03em',
+                lineHeight: 1.1,
+            }}>
+                Booking Confirmed!
+            </h1>
+
+            <p style={{ fontSize: 18, color: 'var(--w-text-muted)', fontWeight: 500, lineHeight: 1.6, marginBottom: 40 }}>
+                Your booking at <strong style={{ color: 'var(--w-accent)' }}>{formData.selectedListing?.title}</strong> has been successfully processed. A confirmation email will be sent shortly.
+            </p>
+
+            {/* Summary card */}
+            <div className="w-glass-card" style={{ padding: '24px 32px', marginBottom: 32, textAlign: 'left' }}>
+                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--w-text-muted)', marginBottom: 16 }}>Booking Summary</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <span style={{ color: 'var(--w-text-muted)', fontWeight: 500 }}>Listing</span>
+                    <span style={{ fontWeight: 700, color: 'var(--w-text)' }}>{formData.selectedListing?.title}</span>
                 </div>
-            </footer>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <span style={{ color: 'var(--w-text-muted)', fontWeight: 500 }}>Guest</span>
+                    <span style={{ fontWeight: 700, color: 'var(--w-text)' }}>{formData.name}</span>
+                </div>
+                <div style={{ height: 1, background: 'var(--w-border)', margin: '12px 0' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 800, color: 'var(--w-text)' }}>Total</span>
+                    <span style={{ fontWeight: 900, fontSize: 24, color: 'var(--w-accent)' }}>${formData.selectedListing?.price}</span>
+                </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
+                <button
+                    onClick={onRestart}
+                    style={{
+                        padding: '14px 28px',
+                        borderRadius: 'var(--w-radius)',
+                        background: 'var(--w-accent)',
+                        color: 'var(--w-accent-text)',
+                        fontWeight: 800, fontSize: 15,
+                        border: 'none', cursor: 'pointer',
+                        fontFamily: 'var(--w-font)',
+                        boxShadow: 'var(--w-shadow-accent)',
+                        transition: 'all var(--w-transition)',
+                    }}
+                >
+                    New Booking
+                </button>
+                <button
+                    onClick={() => setShowEmbed(!showEmbed)}
+                    style={{
+                        padding: '14px 28px',
+                        borderRadius: 'var(--w-radius)',
+                        background: 'var(--w-input-bg)',
+                        color: 'var(--w-text)',
+                        fontWeight: 700, fontSize: 15,
+                        border: '1px solid var(--w-border)',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--w-font)',
+                        transition: 'all var(--w-transition)',
+                    }}
+                >
+                    {showEmbed ? 'Hide Code' : 'Get Embed Code'}
+                </button>
+            </div>
+
+            {showEmbed && (
+                <div className="w-step-enter-fast">
+                    <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--w-text-muted)', marginBottom: 12 }}>
+                        Add to your website
+                    </p>
+                    <div className="w-code-card" style={{ textAlign: 'left' }}>
+                        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all', color: '#94a3b8' }}>
+                            {embedCode}
+                        </pre>
+                        <button className="w-copy-btn" onClick={() => {
+                            navigator.clipboard.writeText(embedCode);
+                            alert('Copied!');
+                        }}>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,118 +1,352 @@
 @import "tailwindcss";
 
-@theme {
-  --color-primary: #0f172a;
-  --color-accent: #3b82f6;
-  --color-background: #f8fafc;
-  --color-surface: #ffffff;
-  --color-text: #1e293b;
-  --color-text-light: #64748b;
-  --color-border: #e2e8f0;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  --radius-4xl: 2.5rem;
-  --color-booking-bg: #e0f0ff;
-  --color-booking-accent: #ffef00;
-}
+/* =====================================================
+   WIDGET DESIGN SYSTEM — CSS Custom Properties
+   All values driven by ThemeContext via inline styles
+   ===================================================== */
 
 :host {
   display: block;
 }
 
-/* Base styles scoped to the container */
-.booking-engine-container {
-  @apply bg-background text-text font-sans antialiased;
-  @apply min-h-[700px] bg-booking-bg flex flex-col relative overflow-hidden rounded-[inherit];
+/* Google Fonts preload */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+/* ──────────────────────────────────────
+   CORE CONTAINER
+────────────────────────────────────── */
+.booking-engine-root {
+  font-family: var(--w-font, 'Inter', sans-serif);
+  color: var(--w-text, #0f172a);
+  background: var(--w-gradient, linear-gradient(135deg, #e0f0ff 0%, #c7dfff 100%));
+  min-height: 700px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
 }
 
-.booking-wizard-card {
-  @apply flex-1 flex flex-col items-center justify-center p-6 md:p-12 lg:p-16 mb-0;
+/* ──────────────────────────────────────
+   GLASS CARD
+────────────────────────────────────── */
+.w-glass-card {
+  background: var(--w-glass, rgba(255,255,255,0.7));
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--w-border);
+  border-radius: var(--w-radius, 24px);
+  box-shadow: var(--w-shadow);
 }
 
-.booking-step-content {
-  @apply w-full max-w-6xl flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-20 items-center lg:items-start;
+/* ──────────────────────────────────────
+   STEP OPTION CARD (radio-style selectors)
+────────────────────────────────────── */
+.w-option-card {
+  background: var(--w-card-bg);
+  border: 2px solid var(--w-border);
+  border-radius: var(--w-radius);
+  padding: 18px 22px;
+  cursor: pointer;
+  transition: all var(--w-transition, 0.3s ease);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--w-shadow);
 }
 
-.booking-option-card {
-  @apply bg-white border-2 border-transparent p-4 md:p-5 rounded-2xl shadow-sm cursor-pointer transition-all duration-300 flex items-center justify-between mb-4 hover:border-blue-200 w-full;
+.w-option-card:hover {
+  background: var(--w-card-hover);
+  border-color: color-mix(in srgb, var(--w-accent) 40%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
 }
 
-.booking-option-card.selected {
-  @apply border-blue-500 shadow-md ring-4 ring-blue-500/5;
+.w-option-card.selected {
+  border-color: var(--w-accent);
+  background: color-mix(in srgb, var(--w-accent) 6%, var(--w-card-bg));
+  box-shadow: var(--w-shadow-accent), var(--w-shadow);
+  transform: translateY(-2px);
 }
 
-.booking-footer {
-  @apply h-24 md:h-28 border-t border-slate-200/60 bg-white/90 backdrop-blur-xl flex items-center justify-between px-6 md:px-16 z-50;
+/* ──────────────────────────────────────
+   RADIO DOT
+────────────────────────────────────── */
+.w-radio-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--w-border);
+  transition: all var(--w-transition, 0.3s ease);
+  flex-shrink: 0;
 }
 
-.step-indicator {
-  @apply flex gap-3;
+.selected .w-radio-dot {
+  border-color: var(--w-accent);
+  border-width: 6px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--w-accent) 15%, transparent);
 }
 
-.step-dot {
-  @apply w-2.5 h-2.5 rounded-full bg-blue-100 transition-all duration-300;
+/* ──────────────────────────────────────
+   INPUT FIELD
+────────────────────────────────────── */
+.w-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--w-input-bg);
+  border: 2px solid transparent;
+  border-radius: var(--w-radius-sm, 12px);
+  font-family: var(--w-font);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--w-text);
+  transition: all var(--w-transition, 0.3s ease);
+  outline: none;
 }
 
-.step-dot.active {
-  @apply bg-blue-900 w-6;
+.w-input::placeholder {
+  color: var(--w-text-muted);
+  font-weight: 400;
 }
 
-.btn-next {
-  @apply bg-booking-accent text-black font-black px-10 md:px-16 py-5 h-full flex items-center gap-4 hover:brightness-95 transition-all active:scale-95 disabled:grayscale disabled:opacity-50 text-base md:text-lg;
+.w-input:focus {
+  background: var(--w-card-bg);
+  border-color: var(--w-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--w-accent) 12%, transparent);
 }
 
-.step-transition {
-  @apply w-full;
-  animation: fadeInSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* ──────────────────────────────────────
+   PROGRESS BAR
+────────────────────────────────────── */
+.w-progress-track {
+  height: 3px;
+  background: var(--w-border);
+  border-radius: 999px;
+  overflow: hidden;
+  flex: 1;
 }
 
-@keyframes fadeInSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.w-progress-fill {
+  height: 100%;
+  background: var(--w-accent);
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
+/* ──────────────────────────────────────
+   STEP DOTS
+────────────────────────────────────── */
+.w-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--w-border);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  @apply bg-transparent;
+.w-step-dot.active {
+  width: 24px;
+  background: var(--w-accent);
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full hover:bg-slate-300;
+.w-step-dot.done {
+  background: color-mix(in srgb, var(--w-accent) 50%, transparent);
 }
 
-.embed-code-card {
-  @apply bg-slate-900 text-slate-300 p-8 rounded-3xl font-mono text-sm relative overflow-hidden shadow-2xl;
+/* ──────────────────────────────────────
+   NEXT BUTTON
+────────────────────────────────────── */
+.w-btn-next {
+  background: var(--w-accent);
+  color: var(--w-accent-text, #fff);
+  font-family: var(--w-font);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0 32px;
+  height: 100%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all var(--w-transition, 0.3s ease);
+  position: relative;
+  overflow: hidden;
 }
 
-.copy-badge {
-  @apply absolute top-5 right-5 bg-white/10 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest text-white/50 hover:bg-white/20 transition-all cursor-pointer;
+.w-btn-next::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background 0.2s;
 }
 
-/* Mobile Specific Tweaks */
-@media (max-width: 768px) {
-  .booking-wizard-card {
-    @apply p-6 pt-24 mb-32;
-  }
+.w-btn-next:hover::after {
+  background: rgba(255,255,255,0.12);
+}
 
-  .booking-footer {
-    @apply px-4 h-24;
-  }
+.w-btn-next:active {
+  transform: scale(0.97);
+}
 
-  .step-indicator {
-    @apply gap-2;
-  }
+.w-btn-next:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
-  .btn-next {
-    @apply px-8;
-  }
+/* ──────────────────────────────────────
+   STEP ANIMATION
+────────────────────────────────────── */
+@keyframes w-fadeSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes w-fadeSlideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes w-scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes w-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes w-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes w-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes w-confetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(80px) rotate(720deg); opacity: 0; }
+}
+
+.w-step-enter {
+  animation: w-fadeSlideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.w-step-enter-fast {
+  animation: w-scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ──────────────────────────────────────
+   CUSTOM SCROLLBAR
+────────────────────────────────────── */
+.w-scrollbar::-webkit-scrollbar { width: 4px; }
+.w-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.w-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--w-border);
+  border-radius: 999px;
+}
+.w-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--w-accent) 40%, transparent);
+}
+
+/* ──────────────────────────────────────
+   ICON CIRCLE
+────────────────────────────────────── */
+.w-icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--w-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  background: var(--w-input-bg);
+  border: 1px solid var(--w-border);
+  transition: all var(--w-transition);
+}
+
+.selected .w-icon-circle {
+  background: color-mix(in srgb, var(--w-accent) 12%, white);
+  border-color: color-mix(in srgb, var(--w-accent) 30%, transparent);
+}
+
+/* ──────────────────────────────────────
+   EMBED CODE CARD
+────────────────────────────────────── */
+.w-code-card {
+  background: #0f172a;
+  color: #94a3b8;
+  border-radius: var(--w-radius-sm, 12px);
+  padding: 20px 24px;
+  font-family: monospace;
+  font-size: 12.5px;
+  line-height: 1.8;
+  position: relative;
+  overflow: hidden;
+}
+
+.w-copy-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.w-copy-btn:hover { background: rgba(255,255,255,0.18); }
+
+/* ──────────────────────────────────────
+   TAG / BADGE
+────────────────────────────────────── */
+.w-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--w-accent) 12%, transparent);
+  color: var(--w-accent);
+  border: 1px solid color-mix(in srgb, var(--w-accent) 20%, transparent);
+}
+
+/* ──────────────────────────────────────
+   FOOTER
+────────────────────────────────────── */
+.w-footer {
+  height: 80px;
+  background: var(--w-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--w-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 50;
+}
+
+@media (min-width: 768px) {
+  .w-footer { padding: 0 48px; }
 }

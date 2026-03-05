@@ -1,36 +1,78 @@
 export default function HotelBooking({ listing, updateFormData, formData }) {
     const today = new Date().toISOString().split('T')[0];
 
-    return (
-        <div className="space-y-4 md:space-y-6">
-            <h3 className="text-lg md:text-xl font-black text-slate-800 border-b pb-3 uppercase tracking-tight">Select Dates</h3>
+    const label = {
+        display: 'block', fontSize: 11, fontWeight: 800,
+        letterSpacing: '0.12em', textTransform: 'uppercase',
+        color: 'var(--w-text-muted)', marginBottom: 8,
+    };
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Check-in</label>
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <h3 style={{
+                fontWeight: 800, fontSize: 15,
+                color: 'var(--w-text)',
+                paddingBottom: 12,
+                borderBottom: '1px solid var(--w-border)',
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+            }}>
+                📅 Select Dates
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div>
+                    <label style={label}>Check-in</label>
                     <input
                         type="date"
                         min={today}
-                        className="w-full text-base md:text-lg p-4 bg-slate-50 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all rounded-2xl"
-                        onChange={(e) => updateFormData({ bookingDetails: { ...formData.bookingDetails, checkIn: e.target.value } })}
+                        className="w-input"
+                        onChange={e => updateFormData({ bookingDetails: { ...formData.bookingDetails, checkIn: e.target.value } })}
                     />
                 </div>
-                <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Check-out</label>
+                <div>
+                    <label style={label}>Check-out</label>
                     <input
                         type="date"
-                        min={formData.bookingDetails.checkIn || today}
-                        className="w-full text-base md:text-lg p-4 bg-slate-50 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all rounded-2xl"
-                        onChange={(e) => updateFormData({ bookingDetails: { ...formData.bookingDetails, checkOut: e.target.value } })}
+                        min={formData.bookingDetails?.checkIn || today}
+                        className="w-input"
+                        onChange={e => updateFormData({ bookingDetails: { ...formData.bookingDetails, checkOut: e.target.value } })}
                     />
                 </div>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                <p className="text-blue-800 font-bold text-sm md:text-base flex items-center gap-3">
-                    <span className="text-xl">ℹ️</span> {listing.roomType} room available for selected dates.
-                </p>
+            <div>
+                <label style={label}>Guests</label>
+                <select
+                    className="w-input"
+                    style={{ cursor: 'pointer', appearance: 'none' }}
+                    value={formData.bookingDetails?.guests || '2'}
+                    onChange={e => updateFormData({ bookingDetails: { ...formData.bookingDetails, guests: e.target.value } })}
+                >
+                    {[1, 2, 3, 4, 5, 6].map(n => (
+                        <option key={n} value={n}>{n} guest{n > 1 ? 's' : ''}</option>
+                    ))}
+                </select>
             </div>
+
+            {formData.bookingDetails?.checkIn && formData.bookingDetails?.checkOut && (
+                <div style={{
+                    padding: '14px 16px',
+                    background: 'color-mix(in srgb, var(--w-accent) 8%, transparent)',
+                    borderRadius: 'var(--w-radius-sm)',
+                    border: '1px solid color-mix(in srgb, var(--w-accent) 20%, transparent)',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                    <span style={{ fontSize: 20 }}>✅</span>
+                    <div>
+                        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--w-text)' }}>
+                            {listing.roomType || 'Standard'} room available
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--w-text-muted)', fontWeight: 500 }}>
+                            {formData.bookingDetails.checkIn} → {formData.bookingDetails.checkOut}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

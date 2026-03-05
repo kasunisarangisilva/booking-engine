@@ -1,17 +1,160 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>widget</title>
+  <title>Booking Engine Widget — Theme Preview</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0f0f1a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 24px;
+      gap: 32px;
+    }
+
+    header {
+      text-align: center;
+      max-width: 700px;
+    }
+
+    header h1 {
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 900;
+      background: linear-gradient(135deg, #7dd3fc, #a78bfa, #f9a8d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    header p {
+      font-size: 16px;
+      color: #64748b;
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    /* Widget container */
+    .widget-wrap {
+      width: 100%;
+      max-width: 1200px;
+      min-height: 700px;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 48px 96px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    booking-engine {
+      display: block;
+      width: 100%;
+      min-height: 700px;
+    }
+
+    /* Theme switcher pills */
+    .theme-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .theme-pill {
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .theme-pill:hover, .theme-pill.active {
+      background: rgba(255,255,255,0.12);
+      color: white;
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .info-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .info-chip {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #64748b;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .info-chip span { color: #a78bfa; }
+  </style>
 </head>
-
 <body>
-  <div id="root"></div>
-  <booking-engine data-account-id="DEV_MODE"></booking-engine>
-  <script type="module" src="/src/main.jsx"></script>
-</body>
 
+  <header>
+    <h1>🗓 Booking Engine Widget</h1>
+    <p>An advanced, fully themeable booking widget. Click the 🎨 palette icon inside the widget to customize colors, fonts, and corner styles in real time.</p>
+  </header>
+
+  <div class="info-bar">
+    <div class="info-chip">Theme: <span id="chip-theme">ocean</span></div>
+    <div class="info-chip">Font: <span id="chip-font">inter</span></div>
+    <div class="info-chip">Radius: <span id="chip-radius">round</span></div>
+  </div>
+
+  <div class="theme-pills">
+    <button class="theme-pill active" onclick="setTheme('ocean')">🌊 Ocean</button>
+    <button class="theme-pill" onclick="setTheme('midnight')">🌙 Midnight</button>
+    <button class="theme-pill" onclick="setTheme('sunset')">🌅 Sunset</button>
+    <button class="theme-pill" onclick="setTheme('forest')">🌿 Forest</button>
+    <button class="theme-pill" onclick="setTheme('rose')">🌹 Rose Gold</button>
+    <button class="theme-pill" onclick="setTheme('slate')">🪨 Slate</button>
+  </div>
+
+  <div class="widget-wrap">
+    <booking-engine
+      id="my-widget"
+      data-account-id="DEV_MODE"
+      data-theme="ocean"
+      data-font="inter"
+      data-radius="round"
+    ></booking-engine>
+  </div>
+
+  <script type="module" src="/src/main.jsx"></script>
+  <script>
+    function setTheme(theme) {
+      // Update the attribute and re-render
+      const widget = document.getElementById('my-widget');
+      widget.setAttribute('data-theme', theme);
+      document.getElementById('chip-theme').textContent = theme;
+
+      // Update pill active state
+      document.querySelectorAll('.theme-pill').forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Force re-render by toggling the element
+      const parent = widget.parentNode;
+      const next = widget.nextSibling;
+      parent.removeChild(widget);
+      setTimeout(() => parent.insertBefore(widget, next), 50);
+    }
+  </script>
+</body>
 </html>
