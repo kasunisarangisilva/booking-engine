@@ -56,130 +56,105 @@ function BookingEngineInner() {
         paymentMethod: 'card'
     });
     const [showConfirmClose, setShowConfirmClose] = useState(false);
-    try {
-        await axios.post(`${API_BASE}/payments/verify-session`, { sessionId }, {
-            headers: { 'Authorization': `Bearer ${savedToken}` }
-        });
+    const [paymentStatus, setPaymentStatus] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    } catch (err) {
-        console.error('[Widget] Session verification failed:', err);
-    }
-}) ();
-setPaymentStatus('success');
-setStep(6);
-        } else if (window.location.pathname.includes('payment-cancel')) {
-    setPaymentStatus('cancel');
-    setStep(5);
-}
-    }, []);
-
-console.log('[Widget] Session verification successful');
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        if (sessionId) {
+            const savedToken = localStorage.getItem('booking_token');
+            (async () => {
+                try {
+                    await axios.post(`${API_BASE}/payments/verify-session`, { sessionId }, {
+                        headers: { 'Authorization': `Bearer ${savedToken}` }
+                    });
                 } catch (err) {
-    console.error('[Widget] Session verification failed:', err);
-}
-            }) ();
-setPaymentStatus('success');
-setStep(6);
+                    console.error('[Widget] Session verification failed:', err);
+                }
+            })();
+            setPaymentStatus('success');
+            setStep(6);
         } else if (window.location.pathname.includes('payment-cancel')) {
-    setPaymentStatus('cancel');
-    setStep(5);
-}
+            setPaymentStatus('cancel');
+            setStep(5);
+        }
     }, []);
 
 
-const nextStep = () => setStep(prev => prev + 1);
-const prevStep = () => setStep(prev => prev - 1);
-const updateFormData = (newData) => setFormData(prev => ({ ...prev, ...newData }));
+    const nextStep = () => setStep(prev => prev + 1);
+    const prevStep = () => setStep(prev => prev - 1);
+    const updateFormData = (newData) => setFormData(prev => ({ ...prev, ...newData }));
 
-const canProceed = () => {
-    if (step === 1) return !!formData.businessType;
-    if (step === 2) return !!formData.name && !!formData.email;
-    if (step === 3) return !!formData.selectedListing;
-    return true;
-};
+    const canProceed = () => {
+        if (step === 1) return !!formData.businessType;
+        if (step === 2) return !!formData.name && !!formData.email;
+        if (step === 3) return !!formData.selectedListing;
+        return true;
+    };
 
-const handleConfirm = async () => {
-    if (step === 5) {
-        setIsProcessing(true);
-        try {
-            // In a real app, this would initiate the payment gateway
-            await axios.post(`${API_BASE}/bookings`, {
-                listingId: formData.selectedListing.id,
-            });
+    const handleConfirm = async () => {
+        if (step === 5) {
+            setIsProcessing(true);
+            try {
+                // Always create a UNIQUE guest account so we never conflict
+                // with an existing user's password. The real email goes into
+                // booking details for communication purposes only.
+                const guestEmail = `widget_${Date.now()}_${Math.random().toString(36).slice(2)}@guest.internal`;
+                const customerRes = await axios.post(`${API_BASE}/auth/signup`, {
+                    name: formData.name || 'Guest User',
+                    email: guestEmail,
+                    password: 'widgetGuest@2025!',
+                    role: 'user'
+                });
 
-            const userObj = customerRes.data.user;
-            const userId = userObj?._id || userObj?.id;
-
-            const token = customerRes.data.token;
-            if (token) localStorage.setItem('booking_token', token);
-
-            const selectedListing = formData.selectedListing;
-            const listingId = selectedListing?._id || selectedListing?.id;
-            if (!userId || !listingId || !token) throw new Error('Missing required data');
-
-            const bookingRes = await axios.post(`${API_BASE}/bookings`, {
-                listingId, userId,
-
-
-                const token = customerRes.data.token; // Extract token
-
-                // Persist token for redirect fallback
-                if(token) {
-                    localStorage.setItem('booking_token', token);
-                }
-
-                console.log('[Widget] User ID:', userId);
-                console.log('[Widget] Token:', token ? 'Received' : 'Missing');
+                const userObj = customerRes.data.user;
+                const userId = userObj?._id || userObj?.id;
+                const token = customerRes.data.token;
+                if (token) localStorage.setItem('booking_token', token);
 
                 const selectedListing = formData.selectedListing;
                 const listingId = selectedListing?._id || selectedListing?.id;
-                if(!userId || !listingId || !token) throw new Error('Missing required data');
+                if (!userId || !listingId || !token) throw new Error('Missing required data');
 
-            const bookingRes = await axios.post(`${API_BASE}/bookings`, {
-                listingId: listingId,
-                userId: userId,
-
-                details: {
-                    ...formData.bookingDetails,
+                const bookingRes = await axios.post(`${API_BASE}/bookings`, {
+                    listingId, userId,
+                    details: {
+                        ...formData.bookingDetails,
+                        paymentMethod: formData.paymentMethod || 'card',
+                        customerEmail: formData.email || '',  // real contact email
+                        customerName: formData.name || 'Guest',
+                    },
                     paymentMethod: formData.paymentMethod || 'card',
-                    customerEmail: formData.email || '',  // real contact email
-                    customerName: formData.name || 'Guest',
-                },
-                totalPrice: formData.selectedListing.price
-            });
+                    totalPrice: selectedListing.price
+                }, { headers: { 'Authorization': `Bearer ${token}` } });
 
-            const bookingId = bookingRes.data._id;
+                const bookingId = bookingRes.data._id;
 
-            let paymentRes;
-            if (formData.paymentMethod === 'koko') {
-                paymentRes = await axios.post(`${API_BASE}/payments/koko/initiate`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
-            } else if (formData.paymentMethod === 'mintpay') {
-                paymentRes = await axios.post(`${API_BASE}/payments/mintpay/initiate`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
-            } else {
-                paymentRes = await axios.post(`${API_BASE}/payments/create-stripe-session`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                let paymentRes;
+                if (formData.paymentMethod === 'koko') {
+                    paymentRes = await axios.post(`${API_BASE}/payments/koko/initiate`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                } else if (formData.paymentMethod === 'mintpay') {
+                    paymentRes = await axios.post(`${API_BASE}/payments/mintpay/initiate`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                } else {
+                    paymentRes = await axios.post(`${API_BASE}/payments/create-stripe-session`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                }
+
+                if (paymentRes.data.url || paymentRes.data.redirectUrl) {
+                    window.location.href = paymentRes.data.url || paymentRes.data.redirectUrl;
+                } else {
+                    nextStep();
+                }
+            } catch (err) {
+                const msg = err.response?.data?.message || err.message || 'Unknown error';
+                alert(`Payment/Booking failed: ${msg}`);
+            } finally {
+                setIsProcessing(false);
             }
-
-            if (paymentRes.data.url || paymentRes.data.redirectUrl) {
-                window.location.href = paymentRes.data.url || paymentRes.data.redirectUrl;
-            } else {
-                nextStep();
-            }
-        } catch (err) {
-            alert('Payment/Booking failed. Please try again.');
-            console.error(err);
-
-            console.error('[Widget] Booking error:', err);
-            console.error('[Widget] Error response:', err.response?.data);
-
-            const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
-            alert(`Payment/Booking failed: ${errorMessage}`);
-
         }
-    } else {
-        nextStep();
+
     }
 };
-
 const renderStep = () => {
     switch (step) {
         case 1: return <StepTypeSelection formData={formData} updateFormData={updateFormData} />;
@@ -349,86 +324,88 @@ return (
         </main>
 
         {/* Footer */}
-        {step <= TOTAL_STEPS && (
-            <footer className="w-footer">
-                {/* Back */}
-                <div style={{ flex: 1 }}>
-                    {step > 1 && (
-                        <button
-                            onClick={prevStep}
-                            style={{
-                                background: 'none', border: 'none',
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                                fontWeight: 800, fontSize: 13,
-                                letterSpacing: '0.12em', textTransform: 'uppercase',
-                                color: 'var(--w-text-muted)',
-                                fontFamily: 'var(--w-font)',
-                                transition: 'all var(--w-transition)',
-                                padding: 0,
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--w-accent)'; e.currentTarget.querySelector('span').style.transform = 'translateX(-4px)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--w-text-muted)'; e.currentTarget.querySelector('span').style.transform = 'translateX(0)'; }}
-                        >
-                            <span style={{ fontSize: 20, transition: 'transform 0.2s' }}>←</span>
-                            Back
-                        </button>
-                    )}
-                </div>
-
-                {/* Step dots */}
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
-                    {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                        <div
-                            key={i}
-                            className={`w-step-dot ${step === i + 1 ? 'active' : step > i + 1 ? 'done' : ''}`}
-                        />
-                    ))}
-                </div>
-
-                {/* Next / Purchase */}
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                    <button
-                        onClick={handleConfirm}
-                        disabled={!canProceed() || isProcessing}
-                        className="w-btn-next"
-                        style={{ borderRadius: 0 }}
-                    >
-                        {isProcessing ? (
-                            <>
-                                <div style={{
-                                    width: 18, height: 18, borderRadius: '50%',
-                                    border: '3px solid rgba(255,255,255,0.3)',
-                                    borderTopColor: 'white',
-                                    animation: 'w-spin 0.8s linear infinite',
-                                }} />
-                                Processing…
-                            </>
-                        ) : (
-                            <>
-                                <span>{step === 5 ? 'Purchase' : 'Continue'}</span>
-                                <span style={{ fontSize: 20, transition: 'transform 0.2s' }}>→</span>
-                            </>
+        {
+            step <= TOTAL_STEPS && (
+                <footer className="w-footer">
+                    {/* Back */}
+                    <div style={{ flex: 1 }}>
+                        {step > 1 && (
+                            <button
+                                onClick={prevStep}
+                                style={{
+                                    background: 'none', border: 'none',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                                    fontWeight: 800, fontSize: 13,
+                                    letterSpacing: '0.12em', textTransform: 'uppercase',
+                                    color: 'var(--w-text-muted)',
+                                    fontFamily: 'var(--w-font)',
+                                    transition: 'all var(--w-transition)',
+                                    padding: 0,
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--w-accent)'; e.currentTarget.querySelector('span').style.transform = 'translateX(-4px)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--w-text-muted)'; e.currentTarget.querySelector('span').style.transform = 'translateX(0)'; }}
+                            >
+                                <span style={{ fontSize: 20, transition: 'transform 0.2s' }}>←</span>
+                                Back
+                            </button>
                         )}
-                    </button>
-                </div>
-            </footer>
-        )}
-    </div>
+                    </div>
+
+                    {/* Step dots */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+                        {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+                            <div
+                                key={i}
+                                className={`w-step-dot ${step === i + 1 ? 'active' : step > i + 1 ? 'done' : ''}`}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Next / Purchase */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                            onClick={handleConfirm}
+                            disabled={!canProceed() || isProcessing}
+                            className="w-btn-next"
+                            style={{ borderRadius: 0 }}
+                        >
+                            {isProcessing ? (
+                                <>
+                                    <div style={{
+                                        width: 18, height: 18, borderRadius: '50%',
+                                        border: '3px solid rgba(255,255,255,0.3)',
+                                        borderTopColor: 'white',
+                                        animation: 'w-spin 0.8s linear infinite',
+                                    }} />
+                                    Processing…
+                                </>
+                            ) : (
+                                <>
+                                    <span>{step === 5 ? 'Purchase' : 'Continue'}</span>
+                                    <span style={{ fontSize: 20, transition: 'transform 0.2s' }}>→</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </footer>
+            )
+        }
+    </div >
 );
-}
+
 
 function ConfirmationStep({ formData, onRestart }) {
     const [showEmbed, setShowEmbed] = useState(false);
     const { themeKey, fontId, radiusId } = useTheme();
 
     const embedCode = `<!-- BookEngine Widget -->
-<script src="https://booking-engine-widget.vercel.app/loader.js"></script>
-<booking-engine
-  data-account-id="YOUR_ACCOUNT_ID"
-  data-theme="${themeKey}"
-  data-font="${fontId}"
-  data-radius="${radiusId}"
-></booking-engine>`;
+                <script src="https://booking-engine-widget.vercel.app/loader.js"></script>
+                <booking-engine
+                    data-account-id="YOUR_ACCOUNT_ID"
+                    data-theme="${themeKey}"
+                    data-font="${fontId}"
+                    data-radius="${radiusId}"
+                ></booking-engine>`;
 
     return (
         <div className="w-step-enter" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto', padding: '0 16px' }}>
