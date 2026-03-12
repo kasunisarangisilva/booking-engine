@@ -46,6 +46,11 @@ const HotelListing = Listing.discriminator('hotel', new mongoose.Schema({
     amenities: {
         type: [String],
         default: []
+    },
+    totalRooms: {
+        type: Number,
+        default: 5,
+        min: 1
     }
 }));
 
@@ -77,6 +82,11 @@ const SpaceListing = Listing.discriminator('space', new mongoose.Schema({
         type: String,
         enum: ['event', 'storage', 'office'],
         required: true
+    },
+    totalUnits: {
+        type: Number,
+        default: 1,
+        min: 1
     }
 }));
 
@@ -95,7 +105,30 @@ const VehicleListing = Listing.discriminator('vehicle', new mongoose.Schema({
         type: Number,
         required: true,
         min: 1
+    },
+    totalUnits: {
+        type: Number,
+        default: 1,
+        min: 1
     }
 }));
 
-module.exports = { Listing, HotelListing, CinemaListing, SpaceListing, VehicleListing };
+// Hostel discriminator
+const HostelListing = Listing.discriminator('hostel', new mongoose.Schema({
+    roomType: {
+        type: String,
+        enum: ['dormitory', 'private', 'mixed'],
+        default: 'dormitory'
+    },
+    amenities: {
+        type: [String],
+        default: []
+    },
+    totalRooms: {
+        type: Number,
+        default: 5,
+        min: 1
+    }
+}));
+
+module.exports = { Listing, HotelListing, CinemaListing, SpaceListing, VehicleListing, HostelListing };

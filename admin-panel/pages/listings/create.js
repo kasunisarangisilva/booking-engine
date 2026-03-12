@@ -20,13 +20,16 @@ export default function CreateListing() {
         location: '',
         vendorId: '',
         roomType: 'single',
+        totalRooms: '5',
         movieTitle: '',
         showTime: '',
+        seatRows: '10',
+        seatCols: '10',
         area: '',
         usageType: 'event',
+        totalUnits: '1',
         vehicleType: 'car',
         capacity: '',
-        amenities: '',
         features: ''
     });
 
@@ -45,7 +48,8 @@ export default function CreateListing() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Filter for approved vendors only
-            const approvedVendors = res.data.filter(v => v.role === 'vendor');
+            const vendorsData = Array.isArray(res.data) ? res.data : (res.data.vendors || []);
+            const approvedVendors = vendorsData.filter(v => v.role === 'vendor');
             setVendors(approvedVendors);
         } catch (err) {
             console.error('Error fetching vendors:', err);
@@ -86,7 +90,13 @@ export default function CreateListing() {
             features: formData.features ? formData.features.split(',').map(s => s.trim()) : [],
             capacity: Number(formData.capacity),
             area: Number(formData.area),
-            seatLayout: { rows: 10, cols: 10, aisles: [] } // Default for cinema
+            seatLayout: { 
+                rows: Number(formData.seatRows) || 10, 
+                cols: Number(formData.seatCols) || 10, 
+                aisles: [] 
+            },
+            totalRooms: Number(formData.totalRooms) || 5,
+            totalUnits: Number(formData.totalUnits) || 1,
         };
 
         try {
@@ -157,6 +167,7 @@ export default function CreateListing() {
                                     value={formData.type}
                                 >
                                     <option value="hotel">🏨 Hotel/Stay</option>
+                                    <option value="hostel">🏕️ Hostel</option>
                                     <option value="cinema">🎬 Cinema/Movie</option>
                                     <option value="space">🏢 Event Space</option>
                                     <option value="vehicle">🚗 Vehicle Rental</option>
@@ -180,18 +191,32 @@ export default function CreateListing() {
                         <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
                             <h3 className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-6 underline underline-offset-8">Category Specific Details</h3>
 
-                            {formData.type === 'hotel' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {(formData.type === 'hotel' || formData.type === 'hostel') && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="flex flex-col gap-2">
                                         <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Room Type</label>
                                         <select name="roomType" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold">
-                                            <option value="single">Single Room</option>
-                                            <option value="double">Double Room</option>
-                                            <option value="king">King Suite</option>
+                                            {formData.type === 'hotel' ? (
+                                                <>
+                                                    <option value="single">Single Room</option>
+                                                    <option value="double">Double Room</option>
+                                                    <option value="king">King Suite</option>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <option value="dormitory">Dormitory</option>
+                                                    <option value="private">Private Room</option>
+                                                    <option value="mixed">Mixed Dorm</option>
+                                                </>
+                                            )}
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Amenities (comma separated)</label>
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Total Rooms</label>
+                                        <input type="number" name="totalRooms" min="1" value={formData.totalRooms} onChange={handleChange} placeholder="e.g. 10" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Amenities (comma sep.)</label>
                                         <input type="text" name="amenities" onChange={handleChange} placeholder="WiFi, Pool, Spa" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
                                     </div>
                                 </div>
@@ -207,11 +232,19 @@ export default function CreateListing() {
                                         <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Show Time</label>
                                         <input type="datetime-local" name="showTime" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
                                     </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Seat Rows</label>
+                                        <input type="number" name="seatRows" min="1" max="20" value={formData.seatRows} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Seat Columns</label>
+                                        <input type="number" name="seatCols" min="1" max="20" value={formData.seatCols} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
                                 </div>
                             )}
 
                             {formData.type === 'space' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="flex flex-col gap-2">
                                         <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Area (sq ft)</label>
                                         <input type="number" name="area" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
@@ -224,11 +257,15 @@ export default function CreateListing() {
                                             <option value="office">Office</option>
                                         </select>
                                     </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Total Units / Sections</label>
+                                        <input type="number" name="totalUnits" min="1" value={formData.totalUnits} onChange={handleChange} placeholder="e.g. 3" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
                                 </div>
                             )}
 
                             {formData.type === 'vehicle' && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                     <div className="flex flex-col gap-2">
                                         <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Vehicle Type</label>
                                         <select name="vehicleType" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold">
@@ -238,8 +275,12 @@ export default function CreateListing() {
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Capacity</label>
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Seating Capacity</label>
                                         <input type="number" name="capacity" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Total Vehicles</label>
+                                        <input type="number" name="totalUnits" min="1" value={formData.totalUnits} onChange={handleChange} placeholder="e.g. 5" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Features</label>

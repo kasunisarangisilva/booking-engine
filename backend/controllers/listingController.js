@@ -159,3 +159,91 @@ exports.getMyListings = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+const Booking = require('../models/Booking');
+
+exports.getListingAvailability = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { date } = req.query;
+        const listing = await Listing.findById(id);
+        if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+        // Build base query
+        const query = { 
+            listingId: id, 
+            status: { $in: ['confirmed', 'pending', 'awaiting_payment'] } 
+        };
+
+        // If date is provided and it's cinema, filter by details.date
+        if (date && listing.type === 'cinema') {
+            query['details.date'] = date;
+        }
+
+        const bookings = await Booking.find(query);
+
+        if (listing.type === 'cinema') {
+            // Flatten all seats from all bookings
+            const takenSeats = bookings.reduce((acc, b) => {
+                if (b.details && b.details.seats) {
+                    return [...acc, ...b.details.seats];
+                }
+                return acc;
+            }, []);
+            return res.status(200).json({ type: 'cinema', takenSeats });
+        } else if (listing.type === 'hotel' || listing.type === 'hostel') {
+            // For hotels, get bookedRoomNumbers for the date range
+            const { checkIn, checkOut } = req.query;
+            
+            // Fetch bookings that overlap with the requested date range
+            let hotelQuery = { 
+                listingId: id, 
+                status: { $in: ['confirmed', 'pending', 'awaiting_payment'] } 
+            };
+            const allBookings = await Booking.find(hotelQuery);
+            
+            // Filter by date overlap if dates provided
+            const overlapping = checkIn && checkOut
+                ? allBookings.filter(b => {
+                    const bIn = b.details.checkIn;
+                    const bOut = b.details.checkOut;
+                    if (!bIn || !bOut) return false;
+                    // Overlaps if: bIn < checkOut AND bOut > checkIn
+                    return bIn < checkOut && bOut > checkIn;
+                })
+                : allBookings;
+            
+            const bookedRooms = overlapping.map(b => b.details.roomNumber).filter(Boolean);
+            const totalRooms = listing.totalRooms || 5;
+            
+            return res.status(200).json({ type: listing.type, bookedRooms, totalRooms });
+        } else {
+            // For Vehicle and Space - return booked unit numbers for the date
+            const { pickupDate, eventDate } = req.query;
+            const filterDate = pickupDate || eventDate;
+
+            const allTypeBookings = await Booking.find({ 
+                listingId: id, 
+                status: { $in: ['confirmed', 'pending', 'awaiting_payment'] } 
+            });
+            
+            const overlapping = filterDate
+                ? allTypeBookings.filter(b => {
+                    const bDate = b.details.pickupDate || b.details.eventDate;
+                    return bDate === filterDate;
+                })
+                : allTypeBookings;
+
+            const bookedUnits = overlapping.map(b => b.details.unitNumber).filter(Boolean);
+            const totalUnits = listing.totalUnits || 1;
+            const takenDates = allTypeBookings.map(b => ({
+                start: b.details.pickupDate || b.details.eventDate,
+            }));
+
+            return res.status(200).json({ type: listing.type, bookedUnits, totalUnits, takenDates });
+        }
+    } catch (error) {
+        console.error('Get availability error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};

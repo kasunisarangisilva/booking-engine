@@ -174,7 +174,7 @@ export default function StepDetails({ formData, updateFormData }) {
                         <input
                             className="w-input"
                             type="text"
-                            placeholder="e.g. Singapore"
+                            placeholder="e.g. Sri Lanka"
                             value={formData.country || ''}
                             onChange={e => updateFormData({ country: e.target.value })}
                             style={{ paddingLeft: 48 }}
