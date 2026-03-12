@@ -1,10 +1,11 @@
 import { useState } from 'react';
 
-export default function CinemaBooking({ listing, updateFormData, formData }) {
+export default function CinemaBooking({ listing, updateFormData, formData, availability }) {
     const [selectedSeats, setSelectedSeats] = useState(formData.bookingDetails?.seats || []);
 
     const rows = listing.seatLayout?.rows || 7;
     const cols = listing.seatLayout?.cols || 10;
+    const today = new Date().toISOString().split('T')[0];
 
     const toggleSeat = (row, col) => {
         const seatId = `${String.fromCharCode(65 + row)}${col + 1}`;
@@ -15,9 +16,53 @@ export default function CinemaBooking({ listing, updateFormData, formData }) {
         updateFormData({ bookingDetails: { ...formData.bookingDetails, seats: newSeats } });
     };
 
+    const handleDateChange = (date) => {
+        setSelectedSeats([]);
+        updateFormData({ 
+            bookingDetails: { 
+                ...formData.bookingDetails, 
+                date,
+                seats: [] 
+            } 
+        });
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Screen indicator */}
+            {/* Date Selection */}
+            <div>
+                <label style={{
+                    display: 'block', fontSize: 11, fontWeight: 800,
+                    letterSpacing: '0.12em', textTransform: 'uppercase',
+                    color: 'var(--w-text-muted)', marginBottom: 8,
+                }}>
+                    Select Show Date
+                </label>
+                <input
+                    type="date"
+                    min={today}
+                    className="w-input"
+                    value={formData.bookingDetails?.date || ''}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                />
+            </div>
+
+            {!formData.bookingDetails?.date ? (
+                <div style={{
+                    padding: '32px 16px',
+                    textAlign: 'center',
+                    background: 'var(--w-input-bg)',
+                    borderRadius: 'var(--w-radius-sm)',
+                    border: '1px dashed var(--w-border)',
+                }}>
+                    <span style={{ fontSize: 24, display: 'block', marginBottom: 8 }}>📅</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--w-text-muted)' }}>
+                        Please select a date to view available seats
+                    </span>
+                </div>
+            ) : (
+                <>
+                    {/* Screen indicator */}
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
                 <div style={{
                     height: 4, borderRadius: 999,
@@ -46,17 +91,20 @@ export default function CinemaBooking({ listing, updateFormData, formData }) {
                         Array.from({ length: cols }).map((_, c) => {
                             const seatId = `${String.fromCharCode(65 + r)}${c + 1}`;
                             const isSelected = selectedSeats.includes(seatId);
+                            const isTaken = availability?.takenSeats?.includes(seatId);
+                            
                             return (
                                 <div
                                     key={seatId}
-                                    title={seatId}
-                                    onClick={() => toggleSeat(r, c)}
+                                    title={isTaken ? `${seatId} (Taken)` : seatId}
+                                    onClick={() => !isTaken && toggleSeat(r, c)}
                                     style={{
                                         width: 30, height: 28,
                                         borderRadius: '6px 6px 0 0',
-                                        border: `2px solid ${isSelected ? 'var(--w-accent)' : 'var(--w-border)'}`,
-                                        background: isSelected ? 'var(--w-accent)' : 'var(--w-input-bg)',
-                                        cursor: 'pointer',
+                                        border: `2px solid ${isTaken ? 'var(--w-border)' : isSelected ? 'var(--w-accent)' : 'var(--w-border)'}`,
+                                        background: isTaken ? 'var(--w-border)' : isSelected ? 'var(--w-accent)' : 'var(--w-input-bg)',
+                                        cursor: isTaken ? 'not-allowed' : 'pointer',
+                                        opacity: isTaken ? 0.3 : 1,
                                         transition: 'all var(--w-transition)',
                                         transform: isSelected ? 'scale(1.08)' : 'scale(1)',
                                         boxShadow: isSelected ? 'var(--w-shadow-accent)' : 'none',
@@ -98,6 +146,8 @@ export default function CinemaBooking({ listing, updateFormData, formData }) {
                         🎟️ {selectedSeats.length} seat{selectedSeats.length > 1 ? 's' : ''} selected: {selectedSeats.join(', ')}
                     </span>
                 </div>
+            )}
+                </>
             )}
         </div>
     );

@@ -2,6 +2,7 @@ const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STR
 const Booking = require('../models/Booking');
 const { Listing } = require('../models/Listing');
 const Notification = require('../models/Notification');
+const smsService = require('../utils/smsService');
 
 // Helper to notify admin and vendor
 const notifyBookingConfirmed = async (booking, io) => {
@@ -37,6 +38,11 @@ const notifyBookingConfirmed = async (booking, io) => {
             ...vendorNotif.toObject(),
             data: booking
         });
+
+        // 3. Send SMS Confirmation (Simulated)
+        const bookingWithListing = await Booking.findById(booking._id).populate('listingId');
+        await smsService.sendBookingConfirmation(bookingWithListing);
+
     } catch (error) {
         console.error('Notification error:', error);
     }

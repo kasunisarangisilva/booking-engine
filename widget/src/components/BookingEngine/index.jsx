@@ -50,7 +50,7 @@ function BookingEngineInner() {
         email: '',
         propertyType: '',
         rooms: '',
-        country: 'Singapore',
+        country: '',
         selectedListing: null,
         bookingDetails: {},
         paymentMethod: 'card'
@@ -58,6 +58,38 @@ function BookingEngineInner() {
     const [showConfirmClose, setShowConfirmClose] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [availability, setAvailability] = useState(null);
+
+    useEffect(() => {
+        const listingId = formData.selectedListing?._id || formData.selectedListing?.id;
+        const selectedDate = formData.bookingDetails?.date;
+        const checkIn = formData.bookingDetails?.checkIn;
+        const checkOut = formData.bookingDetails?.checkOut;
+        const pickupDate = formData.bookingDetails?.pickupDate;
+        const eventDate = formData.bookingDetails?.eventDate;
+        const businessType = formData.businessType;
+
+        if (listingId && step >= 3) {
+            (async () => {
+                try {
+                    let url = `${API_BASE}/listings/${listingId}/availability`;
+                    const params = new URLSearchParams();
+                    if (selectedDate) params.set('date', selectedDate);
+                    if ((businessType === 'hotel' || businessType === 'hostel') && checkIn && checkOut) {
+                        params.set('checkIn', checkIn);
+                        params.set('checkOut', checkOut);
+                    }
+                    if (businessType === 'vehicle' && pickupDate) params.set('pickupDate', pickupDate);
+                    if (businessType === 'space' && eventDate) params.set('eventDate', eventDate);
+                    if ([...params].length) url += `?${params.toString()}`;
+                    const res = await axios.get(url);
+                    setAvailability(res.data);
+                } catch (err) {
+                    console.error('[Widget] Failed to fetch availability:', err);
+                }
+            })();
+        }
+    }, [formData.selectedListing, step, formData.bookingDetails?.date, formData.bookingDetails?.checkIn, formData.bookingDetails?.checkOut, formData.bookingDetails?.pickupDate, formData.bookingDetails?.eventDate]);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -88,9 +120,17 @@ function BookingEngineInner() {
 
     const canProceed = () => {
         if (step === 1) return !!formData.businessType;
-        if (step === 2) return !!formData.name && !!formData.email;
+        if (step === 2) return !!formData.name && !!formData.email && !!formData.phone;
         if (step === 3) return !!formData.selectedListing;
-        return true;
+        if (step === 4) {
+            const bt = formData.businessType;
+            const bd = formData.bookingDetails;
+            if (bt === 'hotel' || bt === 'hostel') return !!bd?.roomNumber && !!bd?.checkIn && !!bd?.checkOut;
+            if (bt === 'vehicle') return !!bd?.unitNumber && !!bd?.pickupDate;
+            if (bt === 'space') return !!bd?.unitNumber && !!bd?.eventDate;
+            if (bt === 'cinema') return !!bd?.date && (bd?.seats?.length > 0);
+            return true;
+        }
     };
 
     const handleConfirm = async () => {
@@ -105,7 +145,8 @@ function BookingEngineInner() {
                     name: formData.name || 'Guest User',
                     email: guestEmail,
                     password: 'widgetGuest@2025!',
-                    role: 'user'
+                    role: 'user',
+                    phone: formData.phone
                 });
 
                 const userObj = customerRes.data.user;
@@ -124,9 +165,11 @@ function BookingEngineInner() {
                         paymentMethod: formData.paymentMethod || 'card',
                         customerEmail: formData.email || '',  // real contact email
                         customerName: formData.name || 'Guest',
+                        customerPhone: formData.phone || '',
                     },
                     paymentMethod: formData.paymentMethod || 'card',
-                    totalPrice: selectedListing.price
+                    totalPrice: selectedListing.price,
+                    phone: formData.phone
                 }, { headers: { 'Authorization': `Bearer ${token}` } });
 
                 const bookingId = bookingRes.data._id;
@@ -160,9 +203,9 @@ function BookingEngineInner() {
             case 1: return <StepTypeSelection formData={formData} updateFormData={updateFormData} />;
             case 2: return <StepDetails formData={formData} updateFormData={updateFormData} />;
             case 3: return <StepListingSelection formData={formData} updateFormData={updateFormData} />;
-            case 4: return <StepBookingUI formData={formData} updateFormData={updateFormData} />;
+            case 4: return <StepBookingUI formData={formData} updateFormData={updateFormData} availability={availability} />;
             case 5: return <StepPayment formData={formData} updateFormData={updateFormData} />;
-            case 6: return <ConfirmationStep formData={formData} onRestart={() => { setStep(1); setFormData({ businessType: '', name: '', email: '', propertyType: '', rooms: '', country: 'Singapore', selectedListing: null, bookingDetails: {}, paymentMethod: 'card' }); }} />;
+            case 6: return <ConfirmationStep formData={formData} onRestart={() => { setStep(1); setFormData({ businessType: '', name: '', email: '', propertyType: '', rooms: '', country: '', selectedListing: null, bookingDetails: {}, paymentMethod: 'card' }); }} />;
             default: return <StepTypeSelection formData={formData} updateFormData={updateFormData} />;
         }
     };

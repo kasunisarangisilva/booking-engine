@@ -8,7 +8,8 @@ export default function Signup() {
         name: '',
         email: '',
         password: '',
-        role: 'vendor'
+        role: 'vendor',
+        phone: ''
     });
     const [error, setError] = useState('');
     const { signup } = useAuth();
@@ -82,6 +83,18 @@ export default function Signup() {
                                 value={formData.password}
                                 onChange={handleChange}
                                 minLength={6}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1">Phone Number</label>
+                            <input
+                                type="tel"
+                                name="phone"
+                                required
+                                className="appearance-none relative block w-full px-4 py-3 border border-border placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                placeholder="e.g. +94771234567"
+                                value={formData.phone}
+                                onChange={handleChange}
                             />
                         </div>
                         <div>

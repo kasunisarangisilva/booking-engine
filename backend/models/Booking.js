@@ -34,6 +34,10 @@ const bookingSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Total price is required'],
         min: 0
+    },
+    phone: {
+        type: String,
+        trim: true
     }
 }, {
     timestamps: true

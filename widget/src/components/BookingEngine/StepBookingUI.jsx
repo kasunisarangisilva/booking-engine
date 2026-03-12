@@ -4,7 +4,7 @@ import VehicleBooking from './VehicleBooking';
 import SpaceBooking from './SpaceBooking';
 import { useTheme } from './ThemeContext';
 
-export default function StepBookingUI({ formData, updateFormData }) {
+export default function StepBookingUI({ formData, updateFormData, availability }) {
     const { isDark } = useTheme();
     const { businessType, selectedListing } = formData;
 
@@ -22,11 +22,11 @@ export default function StepBookingUI({ formData, updateFormData }) {
 
     const renderUI = () => {
         switch (businessType) {
-            case 'hotel': return <HotelBooking listing={selectedListing} updateFormData={updateFormData} formData={formData} />;
-            case 'hostel': return <HotelBooking listing={selectedListing} updateFormData={updateFormData} formData={formData} />;
-            case 'cinema': return <CinemaBooking listing={selectedListing} updateFormData={updateFormData} formData={formData} />;
-            case 'vehicle': return <VehicleBooking listing={selectedListing} updateFormData={updateFormData} formData={formData} />;
-            case 'space': return <SpaceBooking listing={selectedListing} updateFormData={updateFormData} formData={formData} />;
+            case 'hotel': return <HotelBooking listing={selectedListing} updateFormData={updateFormData} formData={formData} availability={availability} />;
+            case 'hostel': return <HotelBooking listing={selectedListing} updateFormData={updateFormData} formData={formData} availability={availability} />;
+            case 'cinema': return <CinemaBooking listing={selectedListing} updateFormData={updateFormData} formData={formData} availability={availability} />;
+            case 'vehicle': return <VehicleBooking listing={selectedListing} updateFormData={updateFormData} formData={formData} availability={availability} />;
+            case 'space': return <SpaceBooking listing={selectedListing} updateFormData={updateFormData} formData={formData} availability={availability} />;
             default: return (
                 <div style={{ padding: '32px 0', color: 'var(--w-text-muted)', fontWeight: 500 }}>
                     Standard booking form for {businessType}.

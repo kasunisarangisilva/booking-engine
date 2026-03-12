@@ -31,7 +31,8 @@ exports.signup = async (req, res) => {
             name,
             email,
             password,
-            role
+            role,
+            phone: req.body.phone
         });
 
         await newUser.save();
@@ -105,7 +106,8 @@ exports.login = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                phone: user.phone
             }
         });
     } catch (error) {
@@ -123,6 +125,7 @@ exports.updateProfile = async (req, res) => {
 
         user.name = req.body.name || user.name;
         user.email = req.body.email || user.email;
+        user.phone = req.body.phone || user.phone;
 
         if (req.body.password) {
             user.password = req.body.password;
@@ -134,6 +137,7 @@ exports.updateProfile = async (req, res) => {
             _id: updatedUser._id,
             name: updatedUser.name,
             email: updatedUser.email,
+            phone: updatedUser.phone,
             role: updatedUser.role,
             token: generateToken(updatedUser._id, updatedUser.role)
         });

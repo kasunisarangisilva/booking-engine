@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['active', 'pending', 'suspended'],
         default: 'pending'
+    },
+    phone: {
+        type: String,
+        trim: true
     }
 }, {
     timestamps: true // Adds createdAt and updatedAt automatically
