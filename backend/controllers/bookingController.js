@@ -20,7 +20,8 @@ exports.createBooking = async (req, res) => {
             details,
             status: 'awaiting_payment',
             paymentMethod: paymentMethod || 'card',
-            totalPrice
+            totalPrice,
+            phone: req.body.phone
         });
 
         await newBooking.save();

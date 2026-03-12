@@ -88,7 +88,7 @@ function BookingEngineInner() {
 
     const canProceed = () => {
         if (step === 1) return !!formData.businessType;
-        if (step === 2) return !!formData.name && !!formData.email;
+        if (step === 2) return !!formData.name && !!formData.email && !!formData.phone;
         if (step === 3) return !!formData.selectedListing;
         return true;
     };
@@ -105,7 +105,8 @@ function BookingEngineInner() {
                     name: formData.name || 'Guest User',
                     email: guestEmail,
                     password: 'widgetGuest@2025!',
-                    role: 'user'
+                    role: 'user',
+                    phone: formData.phone
                 });
 
                 const userObj = customerRes.data.user;
@@ -124,9 +125,11 @@ function BookingEngineInner() {
                         paymentMethod: formData.paymentMethod || 'card',
                         customerEmail: formData.email || '',  // real contact email
                         customerName: formData.name || 'Guest',
+                        customerPhone: formData.phone || '',
                     },
                     paymentMethod: formData.paymentMethod || 'card',
-                    totalPrice: selectedListing.price
+                    totalPrice: selectedListing.price,
+                    phone: formData.phone
                 }, { headers: { 'Authorization': `Bearer ${token}` } });
 
                 const bookingId = bookingRes.data._id;

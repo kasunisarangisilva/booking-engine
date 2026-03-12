@@ -11,6 +11,7 @@ export default function Profile() {
     // Profile State
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
 
     // Password State
     const [oldPassword, setOldPassword] = useState('');
@@ -23,6 +24,7 @@ export default function Profile() {
         if (user) {
             setName(user.name);
             setEmail(user.email);
+            setPhone(user.phone || '');
         }
     }, [user]);
 
@@ -36,7 +38,7 @@ export default function Profile() {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify({ name, email })
+                body: JSON.stringify({ name, email, phone })
             });
             const data = await res.json();
             if (res.ok) {
@@ -147,6 +149,19 @@ export default function Profile() {
                                         onChange={(e) => setEmail(e.target.value)}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Phone Number
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="+94..."
                                     />
                                 </div>
 

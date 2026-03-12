@@ -3,6 +3,7 @@ import { useTheme } from './ThemeContext';
 const FIELDS = [
     { key: 'name', label: 'Full Name', type: 'text', placeholder: 'e.g. John Doe', icon: '👤' },
     { key: 'email', label: 'Email Address', type: 'email', placeholder: 'e.g. john@example.com', icon: '✉️' },
+    { key: 'phone', label: 'Phone Number', type: 'tel', placeholder: 'e.g. +94771234567', icon: '📱' },
 ];
 
 export default function StepDetails({ formData, updateFormData }) {
@@ -99,6 +100,24 @@ export default function StepDetails({ formData, updateFormData }) {
                         className="w-input"
                         value={formData.email || ''}
                         onChange={(e) => updateFormData({ email: e.target.value })}
+                        required
+                    />
+                </div>
+
+                <div>
+                    <label style={{
+                        display: 'block', fontSize: 11, fontWeight: 800,
+                        letterSpacing: '0.12em', textTransform: 'uppercase',
+                        color: 'var(--w-text-muted)', marginBottom: 8,
+                    }}>
+                        Phone Number
+                    </label>
+                    <input
+                        type="tel"
+                        placeholder="e.g. +94771234567"
+                        className="w-input"
+                        value={formData.phone || ''}
+                        onChange={(e) => updateFormData({ phone: e.target.value })}
                         required
                     />
                 </div>
