@@ -27,18 +27,17 @@ export default function Vendors() {
                 },
             );
 
-            // Ensure res.data.vendors is an array
             if (res.data && Array.isArray(res.data.vendors)) {
                 setVendors(res.data.vendors);
             } else {
                 console.error("Unexpected response structure:", res.data);
-                setVendors([]); // Fallback to empty array
+                setVendors([]);
             }
 
             setPagination(res.data.pagination || null);
         } catch (err) {
             console.error("Error fetching vendors", err);
-            setVendors([]); // Fallback to empty array on error
+            setVendors([]);
         } finally {
             setLoading(false);
         }
@@ -163,8 +162,8 @@ export default function Vendors() {
                                         <td className="p-4">
                                             <span
                                                 className={`px-3 py-1 rounded-full text-[11px] font-bold capitalize ${vendor.status === "active"
-                                                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                                        : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                                                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                                    : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
                                                     }`}
                                             >
                                                 {vendor.status || "pending"}
@@ -225,8 +224,8 @@ export default function Vendors() {
                                 key={i + 1}
                                 onClick={() => setPage(i + 1)}
                                 className={`w-10 h-10 flex items-center justify-center rounded-md text-sm font-black transition-colors ${page === i + 1
-                                        ? "bg-accent text-white"
-                                        : "bg-white dark:bg-slate-800 border border-border dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                    ? "bg-accent text-white"
+                                    : "bg-white dark:bg-slate-800 border border-border dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                                     }`}
                             >
                                 {i + 1}
