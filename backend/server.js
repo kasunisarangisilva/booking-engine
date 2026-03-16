@@ -11,11 +11,17 @@ connectDB();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const allowedOrigins = [
+const baseOrigins = [
   'http://localhost:3000', // Widget dev
   'http://localhost:3001', // Admin panel dev
   'http://localhost:5173'  // Vite default dev
 ];
+
+const envOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [];
+
+const allowedOrigins = [...baseOrigins, ...envOrigins];
 
 // Create HTTP server
 const server = http.createServer(app);
