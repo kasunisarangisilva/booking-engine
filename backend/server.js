@@ -54,7 +54,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const paymentController = require('./controllers/paymentController');
+const paymentController = require('./api/controllers/paymentController');
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -77,12 +77,12 @@ app.get('/', (req, res) => {
   res.send('Booking Engine API is running...');
 });
 
-const authRoutes = require('./routes/authRoutes');
-const listingRoutes = require('./routes/listingRoutes');
-const bookingRoutes = require('./routes/bookingRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
+const authRoutes = require('./api/routes/authRoutes');
+const listingRoutes = require('./api/routes/listingRoutes');
+const bookingRoutes = require('./api/routes/bookingRoutes');
+const adminRoutes = require('./api/routes/adminRoutes');
+const notificationRoutes = require('./api/routes/notificationRoutes');
+const paymentRoutes = require('./api/routes/paymentRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);

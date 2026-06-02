@@ -62,6 +62,20 @@ export default function Vendors() {
                     config,
                 );
                 toast.success("Vendor suspended");
+            } else if (action === "activate") {
+                await axios.post(
+                    `${API_BASE}/admin/vendors/activate`,
+                    { vendorId: id },
+                    config,
+                );
+                toast.success("Vendor activated");
+            } else if (action === "inactivate") {
+                await axios.post(
+                    `${API_BASE}/admin/vendors/inactivate`,
+                    { vendorId: id },
+                    config,
+                );
+                toast.success("Vendor marked as inactive");
             } else {
                 toast.success(`Vendor ${action} action performed`);
             }
@@ -163,7 +177,9 @@ export default function Vendors() {
                                             <span
                                                 className={`px-3 py-1 rounded-full text-[11px] font-bold capitalize ${vendor.status === "active"
                                                     ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                                    : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                                                    : vendor.status === "inactive"
+                                                        ? "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
+                                                        : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
                                                     }`}
                                             >
                                                 {vendor.status || "pending"}
@@ -181,18 +197,30 @@ export default function Vendors() {
                                                         Approve
                                                     </button>
                                                 )}
-                                                <button
-                                                    onClick={() => handleAction(vendor._id, "suspend")}
-                                                    className="btn bg-white dark:bg-slate-800 border border-border dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1 text-xs hover:bg-gray-50 dark:hover:bg-slate-700 font-bold"
-                                                >
-                                                    Suspend
-                                                </button>
-                                                <button
-                                                    onClick={() => handleAction(vendor._id, "delete")}
-                                                    className="btn bg-white dark:bg-slate-800 border border-red-100 dark:border-red-900 text-red-500 dark:text-red-400 px-3 py-1 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 font-bold"
-                                                >
-                                                    Delete
-                                                </button>
+                                                {(vendor.status === "active" || !vendor.status) && (
+                                                    <button
+                                                        onClick={() => handleAction(vendor._id, "suspend")}
+                                                        className="btn bg-white dark:bg-slate-800 border border-border dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1 text-xs hover:bg-gray-50 dark:hover:bg-slate-700 font-bold"
+                                                    >
+                                                        Suspend
+                                                    </button>
+                                                )}
+                                                {(vendor.status === "suspended" || vendor.status === "inactive") && (
+                                                    <button
+                                                        onClick={() => handleAction(vendor._id, "activate")}
+                                                        className="btn btn-accent bg-green-500 hover:bg-green-600 border-green-500 text-white px-3 py-1 text-xs font-bold"
+                                                    >
+                                                        Activate
+                                                    </button>
+                                                )}
+                                                {vendor.status !== "inactive" && (
+                                                    <button
+                                                        onClick={() => handleAction(vendor._id, "inactivate")}
+                                                        className="btn bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 px-3 py-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 font-bold"
+                                                    >
+                                                        Inactive
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
