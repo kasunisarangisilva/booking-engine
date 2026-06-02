@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'pending', 'suspended'],
+        enum: ['active', 'pending', 'suspended', 'inactive'],
         default: 'pending'
     },
     phone: {
