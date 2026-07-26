@@ -22,31 +22,45 @@ export default function ThemeSettingsPanel() {
         }));
     };
 
-    return (
-        <>
-            {/* Backdrop */}
-            {showPanel && (
-                <div
-                    className="fixed inset-0 z-[90] bg-black/30 backdrop-blur-sm"
-                    onClick={() => setShowPanel(false)}
-                />
-            )}
+    if (!showPanel) return null;
 
-            {/* Panel */}
+    return (
+        <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 120,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+        }}>
+            {/* Backdrop */}
             <div
                 style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'rgba(0, 0, 0, 0.45)',
+                    backdropFilter: 'blur(6px)',
+                    WebkitBackdropFilter: 'blur(6px)',
+                }}
+                onClick={() => setShowPanel(false)}
+            />
+
+            {/* Popup Modal Window */}
+            <div
+                className="w-step-enter-fast"
+                style={{
                     fontFamily: 'var(--w-font)',
-                    position: 'fixed',
-                    top: 0,
-                    right: showPanel ? '0' : '-400px',
-                    width: '360px',
-                    height: '100%',
+                    position: 'relative',
+                    zIndex: 10,
+                    width: '100%',
+                    maxWidth: 460,
+                    maxHeight: '85vh',
                     background: 'var(--w-surface)',
-                    borderLeft: '1px solid var(--w-border)',
-                    boxShadow: 'var(--w-shadow)',
-                    zIndex: 100,
-                    transition: 'right 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                    overflowY: 'auto',
+                    border: '1px solid var(--w-border)',
+                    borderRadius: 'var(--w-radius, 24px)',
+                    boxShadow: '0 24px 64px rgba(0,0,0,0.35)',
+                    overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
                 }}
@@ -58,10 +72,8 @@ export default function ThemeSettingsPanel() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    position: 'sticky',
-                    top: 0,
                     background: 'var(--w-surface)',
-                    zIndex: 10,
+                    flexShrink: 0,
                 }}>
                     <div>
                         <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--w-text)', margin: 0 }}>
@@ -87,7 +99,7 @@ export default function ThemeSettingsPanel() {
                     </button>
                 </div>
 
-                <div style={{ flex: 1, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+                <div className="w-scrollbar" style={{ flex: 1, padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 28 }}>
 
                     {/* Preset Themes */}
                     <section>
@@ -292,7 +304,7 @@ export default function ThemeSettingsPanel() {
                     </section>
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 
