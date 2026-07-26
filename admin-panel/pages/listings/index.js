@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import AdminLayout from '../../components/AdminLayout';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { toast } from 'react-hot-toast';
+import { FiEye, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000/api';
@@ -11,7 +14,9 @@ export default function ManageListings() {
     const [pagination, setPagination] = useState(null);
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
+    const [deleteModalId, setDeleteModalId] = useState(null);
     const { user, token } = useAuth();
+    const router = useRouter();
 
     useEffect(() => {
         fetchListings();
@@ -36,6 +41,21 @@ export default function ManageListings() {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModalId) return;
+        try {
+            await axios.delete(`${API_BASE}/listings/${deleteModalId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success("Listing deleted successfully");
+            setDeleteModalId(null);
+            fetchListings();
+        } catch (err) {
+            console.error(err);
+            toast.error(err.response?.data?.message || "Failed to delete listing");
         }
     };
 
@@ -64,6 +84,7 @@ export default function ManageListings() {
                                     <th className="p-4">Price</th>
                                     <th className="p-4">Location</th>
                                     {user?.role === 'admin' && <th className="p-4">Vendor</th>}
+                                    <th className="p-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -75,6 +96,7 @@ export default function ManageListings() {
                                             <td className="p-4"><div className="h-4 bg-slate-200 rounded w-16"></div></td>
                                             <td className="p-4"><div className="h-4 bg-slate-200 rounded w-32"></div></td>
                                             {user?.role === 'admin' && <td className="p-4"><div className="h-4 bg-slate-200 rounded w-24"></div></td>}
+                                            <td className="p-4"><div className="h-4 bg-slate-200 rounded w-16 ml-auto"></div></td>
                                         </tr>
                                     ))
                                 ) : listings.map(l => (
@@ -88,6 +110,20 @@ export default function ManageListings() {
                                         <td className="p-4 font-black text-blue-600">${l.price}</td>
                                         <td className="p-4 text-secondary font-medium">{l.location}</td>
                                         {user?.role === 'admin' && <td className="p-4 text-sm font-bold text-slate-600">{l.vendorId?.name || 'N/A'}</td>}
+                                        <td className="p-4 text-right space-x-2 whitespace-nowrap">
+                                            <Link href={`/listings/view/${l._id}`} className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded text-xs font-bold transition-colors">
+                                                <FiEye size={14} /> View
+                                            </Link>
+                                            <Link href={`/listings/edit/${l._id}`} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-bold transition-colors">
+                                                <FiEdit2 size={14} /> Edit
+                                            </Link>
+                                            <button 
+                                                onClick={() => setDeleteModalId(l._id)}
+                                                className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-bold transition-colors"
+                                            >
+                                                <FiTrash2 size={14} /> Delete
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -129,6 +165,29 @@ export default function ManageListings() {
                     >
                         Next
                     </button>
+                </div>
+            )}
+
+            {deleteModalId && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md w-full shadow-2xl border border-border">
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4">Confirm Deletion</h3>
+                        <p className="text-slate-600 dark:text-slate-300 mb-8 text-lg font-medium">Are you sure you want to delete this listing? This action cannot be undone.</p>
+                        <div className="flex justify-end gap-4">
+                            <button 
+                                onClick={() => setDeleteModalId(null)}
+                                className="px-6 py-3 rounded-xl font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={confirmDelete}
+                                className="px-6 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-200 dark:shadow-none transition-colors"
+                            >
+                                Yes, Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </AdminLayout>

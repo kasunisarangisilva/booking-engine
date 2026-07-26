@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -17,8 +18,10 @@ export default function Login() {
         setError('');
         const res = await login(email, password);
         if (res.success) {
+            toast.success("Login successful!");
             router.push('/');
         } else {
+            toast.error(res.message || "Login failed");
             setError(res.message);
         }
     };

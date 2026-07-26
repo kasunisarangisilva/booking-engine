@@ -54,6 +54,47 @@ const BookingController = {
             console.error('Get vendor bookings error:', error);
             res.status(500).json({ message: 'Server error' });
         }
+    },
+
+    async getBookingById(req, res) {
+        try {
+            const booking = await bookingService.getBookingById(req.params.id);
+            res.status(200).json(booking);
+        } catch (error) {
+            console.error('Get booking by id error:', error);
+            res.status(error.message === 'Booking not found' ? 404 : 500).json({ message: error.message });
+        }
+    },
+
+    async updateBooking(req, res) {
+        try {
+            const updatedBooking = await bookingService.updateBooking(req.params.id, req.body, req.user.role, req.user._id);
+            res.status(200).json(updatedBooking);
+        } catch (error) {
+            console.error('Update booking error:', error);
+            res.status(400).json({ message: error.message });
+        }
+    },
+
+    async cancelBooking(req, res) {
+        try {
+            const { reason } = req.body;
+            const cancelledBooking = await bookingService.cancelBooking(req.params.id, reason, req.user.role, req.user._id);
+            res.status(200).json(cancelledBooking);
+        } catch (error) {
+            console.error('Cancel booking error:', error);
+            res.status(400).json({ message: error.message });
+        }
+    },
+
+    async deleteBooking(req, res) {
+        try {
+            await bookingService.deleteBooking(req.params.id, req.user.role, req.user._id);
+            res.status(200).json({ message: 'Booking deleted successfully' });
+        } catch (error) {
+            console.error('Delete booking error:', error);
+            res.status(400).json({ message: error.message });
+        }
     }
 };
 

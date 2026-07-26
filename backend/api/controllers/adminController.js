@@ -3,6 +3,8 @@ const Booking = require("../../database/models/Booking");
 const { Listing } = require("../../database/models/Listing");
 const AdminService = require("../../services/AdminService");
 const adminService = new AdminService();
+const Notification = require("../../database/models/Notification");
+const PDFDocument = require("pdfkit");
 
 const AdminController = {
   async getAllVendorsV2(req, res, next) {
@@ -72,6 +74,16 @@ const AdminController = {
       vendor.status = "active";
       await vendor.save();
 
+      const notif = new Notification({
+        recipient: vendor._id,
+        type: 'vendor_approved',
+        message: 'Your vendor account has been approved by an admin.'
+      });
+      await notif.save();
+      if (req.io) {
+        req.io.to(`vendor_${vendor._id}`).emit('notification', notif.toObject());
+      }
+
       res.status(200).json({
         message: "Vendor approved successfully",
         vendor: {
@@ -98,6 +110,16 @@ const AdminController = {
       vendor.status = "suspended";
       await vendor.save();
 
+      const notif = new Notification({
+        recipient: vendor._id,
+        type: 'vendor_suspended',
+        message: 'Your vendor account has been suspended by an admin.'
+      });
+      await notif.save();
+      if (req.io) {
+        req.io.to(`vendor_${vendor._id}`).emit('notification', notif.toObject());
+      }
+
       res.status(200).json({ message: "Vendor suspended successfully" });
     } catch (error) {
       console.error("Suspend vendor error:", error);
@@ -115,6 +137,16 @@ const AdminController = {
       vendor.status = "active";
       await vendor.save();
 
+      const notif = new Notification({
+        recipient: vendor._id,
+        type: 'vendor_activated',
+        message: 'Your vendor account has been activated by an admin.'
+      });
+      await notif.save();
+      if (req.io) {
+        req.io.to(`vendor_${vendor._id}`).emit('notification', notif.toObject());
+      }
+
       res.status(200).json({ message: "Vendor activated successfully" });
     } catch (error) {
       console.error("Activate vendor error:", error);
@@ -131,6 +163,16 @@ const AdminController = {
 
       vendor.status = "inactive";
       await vendor.save();
+
+      const notif = new Notification({
+        recipient: vendor._id,
+        type: 'vendor_inactive',
+        message: 'Your vendor account has been marked as inactive.'
+      });
+      await notif.save();
+      if (req.io) {
+        req.io.to(`vendor_${vendor._id}`).emit('notification', notif.toObject());
+      }
 
       res.status(200).json({ message: "Vendor marked as inactive successfully" });
     } catch (error) {
@@ -228,7 +270,7 @@ const AdminController = {
 
   async exportReport(req, res) {
     try {
-      const { type, range } = req.query;
+      const { type, range, format } = req.query;
       const user = req.user;
 
       let query = {};
@@ -256,22 +298,71 @@ const AdminController = {
         .populate("userId", "name email")
         .populate("listingId", "title type");
 
-      let csvContent = "Booking ID,Date,Customer,Email,Listing,Type,Amount,Status\n";
+      if (format === 'pdf') {
+        const doc = new PDFDocument({ margin: 30 });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=bookings-report-${range}.pdf`);
+        doc.pipe(res);
 
-      bookings.forEach((b) => {
-        const date = b.createdAt ? b.createdAt.toISOString().split("T")[0] : "N/A";
-        const customer = b.userId ? b.userId.name : "N/A";
-        const email = b.userId ? b.userId.email : "N/A";
-        const listing = b.listingId ? b.listingId.title : "N/A";
-        const listingType = b.listingId ? b.listingId.type : "N/A";
-        const amount = b.totalPrice || 0;
-        const status = b.status || "pending";
-        csvContent += `${b._id},${date},"${customer}","${email}","${listing}",${listingType},${amount},${status}\n`;
-      });
+        doc.fontSize(20).text('Bookings Report', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).text(`Date Range: ${range}`, { align: 'center' });
+        doc.moveDown(2);
 
-      res.setHeader("Content-Type", "text/csv");
-      res.setHeader("Content-Disposition", `attachment; filename=bookings-report-${range}.csv`);
-      res.status(200).send(csvContent);
+        // Simple table implementation for PDF
+        const tableTop = doc.y;
+        const itemY = tableTop;
+
+        doc.font('Helvetica-Bold');
+        doc.text('Date', 50, itemY, { width: 90 });
+        doc.text('Customer', 150, itemY, { width: 150 });
+        doc.text('Listing', 300, itemY, { width: 150 });
+        doc.text('Amount', 460, itemY, { width: 70 });
+        doc.text('Status', 530, itemY, { width: 60 });
+
+        doc.moveTo(50, itemY + 15).lineTo(590, itemY + 15).stroke();
+        
+        let y = itemY + 20;
+        doc.font('Helvetica');
+
+        bookings.forEach(b => {
+          if (y > 700) {
+            doc.addPage();
+            y = 50;
+          }
+          const date = b.createdAt ? b.createdAt.toISOString().split("T")[0] : "N/A";
+          const customer = (b.userId && b.userId.name) ? String(b.userId.name) : "N/A";
+          const listing = (b.listingId && b.listingId.title) ? String(b.listingId.title) : "N/A";
+          const amount = `$${(b.totalPrice || 0).toFixed(2)}`;
+          const status = String(b.status || "pending");
+
+          doc.text(date, 50, y, { width: 90 });
+          doc.text(customer, 150, y, { width: 150 });
+          doc.text(listing, 300, y, { width: 150 });
+          doc.text(amount, 460, y, { width: 70 });
+          doc.text(status, 530, y, { width: 60 });
+          y += 20;
+        });
+
+        doc.end();
+      } else {
+        let csvContent = "Booking ID,Date,Customer,Email,Listing,Type,Amount,Status\n";
+
+        bookings.forEach((b) => {
+          const date = b.createdAt ? b.createdAt.toISOString().split("T")[0] : "N/A";
+          const customer = (b.userId && b.userId.name) ? String(b.userId.name) : "N/A";
+          const email = (b.userId && b.userId.email) ? String(b.userId.email) : "N/A";
+          const listing = (b.listingId && b.listingId.title) ? String(b.listingId.title) : "N/A";
+          const listingType = (b.listingId && b.listingId.type) ? String(b.listingId.type) : "N/A";
+          const amount = b.totalPrice || 0;
+          const status = String(b.status || "pending");
+          csvContent += `${b._id},${date},"${customer}","${email}","${listing}",${listingType},${amount},${status}\n`;
+        });
+
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename=bookings-report-${range}.csv`);
+        res.status(200).send(csvContent);
+      }
     } catch (error) {
       console.error("Export report error:", error);
       res.status(500).json({ message: "Server error" });

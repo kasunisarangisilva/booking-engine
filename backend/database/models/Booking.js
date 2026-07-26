@@ -25,6 +25,10 @@ const bookingSchema = new mongoose.Schema({
         enum: ['card', 'paypal', 'crypto', 'koko', 'mintpay'],
         default: 'card'
     },
+    cancellationReason: {
+        type: String,
+        trim: true
+    },
     paymentDetails: {
         transactionId: String,
         paymentStatus: String,
