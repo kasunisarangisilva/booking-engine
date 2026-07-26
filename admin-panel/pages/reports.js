@@ -6,6 +6,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000/api'
 export default function Reports() {
     const [reportType, setReportType] = useState('revenue');
     const [dateRange, setDateRange] = useState('last-30');
+    const [exportFormat, setExportFormat] = useState('pdf');
 
     // Mock data for the demonstration
     const mockReportData = [
@@ -16,7 +17,9 @@ export default function Reports() {
     ];
 
     const handleGenerate = () => {
-        const downloadUrl = `${API_BASE}/admin/export-report?type=${reportType}&range=${dateRange}`;
+        const token = localStorage.getItem('token');
+        // Fetch using token so we can authenticate
+        const downloadUrl = `${API_BASE}/admin/export-report?type=${reportType}&range=${dateRange}&format=${exportFormat}&token=${token}`;
         window.location.href = downloadUrl;
     };
 
@@ -62,10 +65,13 @@ export default function Reports() {
                 </div>
                 <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-1">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Export Format</label>
-                    <select className="w-full p-2.5 rounded-md border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent">
+                    <select 
+                        className="w-full p-2.5 rounded-md border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent"
+                        value={exportFormat}
+                        onChange={(e) => setExportFormat(e.target.value)}
+                    >
                         <option value="pdf">PDF Document</option>
                         <option value="csv">CSV Spreadsheet</option>
-                        <option value="excel">Excel Worksheet</option>
                     </select>
                 </div>
             </div>

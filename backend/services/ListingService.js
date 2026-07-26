@@ -103,6 +103,31 @@ class ListingService {
             return { type: listing.type, bookedUnits, totalUnits, takenDates };
         }
     }
+
+    async updateListing(id, vendorId, updateData, userRole) {
+        const listing = await Listing.findById(id);
+        if (!listing) throw new Error('Listing not found');
+        if (userRole !== 'admin' && listing.vendorId.toString() !== vendorId.toString()) {
+            throw new Error('Not authorized to update this listing');
+        }
+        
+        delete updateData.vendorId;
+        delete updateData.type;
+        
+        Object.assign(listing, updateData);
+        return await listing.save();
+    }
+
+    async deleteListing(id, vendorId, userRole) {
+        const listing = await Listing.findById(id);
+        if (!listing) throw new Error('Listing not found');
+        if (userRole !== 'admin' && listing.vendorId.toString() !== vendorId.toString()) {
+            throw new Error('Not authorized to delete this listing');
+        }
+        
+        await Listing.findByIdAndDelete(id);
+        return true;
+    }
 }
 
 module.exports = ListingService;

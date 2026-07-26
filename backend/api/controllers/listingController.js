@@ -76,6 +76,35 @@ const ListingController = {
             console.error('Get availability error:', error.message);
             res.status(error.message === 'Listing not found' ? 404 : 500).json({ message: error.message });
         }
+    },
+
+    async updateListing(req, res) {
+        try {
+            const updatedListing = await listingService.updateListing(
+                req.params.id,
+                req.user._id,
+                req.body,
+                req.user.role
+            );
+            res.status(200).json(updatedListing);
+        } catch (error) {
+            console.error('Update listing error:', error.message);
+            res.status(error.message.includes('Not authorized') ? 403 : 500).json({ message: error.message });
+        }
+    },
+
+    async deleteListing(req, res) {
+        try {
+            await listingService.deleteListing(
+                req.params.id,
+                req.user._id,
+                req.user.role
+            );
+            res.status(200).json({ success: true, message: 'Listing deleted successfully' });
+        } catch (error) {
+            console.error('Delete listing error:', error.message);
+            res.status(error.message.includes('Not authorized') ? 403 : 500).json({ message: error.message });
+        }
     }
 };
 

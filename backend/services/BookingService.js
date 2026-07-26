@@ -68,6 +68,75 @@ class BookingService {
         const total = await this.bookingRepo.countByListingIds(listingIds);
         return { bookings, total, totalPages: Math.ceil(total / limit) };
     }
+
+    async getBookingById(id) {
+        const booking = await this.bookingRepo.findById(id);
+        if (!booking) throw new Error('Booking not found');
+        return booking;
+    }
+
+    async updateBooking(id, updateData, userRole, userId) {
+        const booking = await this.getBookingById(id);
+        
+        // Authorization check (Admin can edit any, Vendor can edit their own listing's bookings)
+        if (userRole === 'vendor') {
+            if (booking.listingId.vendorId.toString() !== userId.toString()) {
+                throw new Error('Not authorized to update this booking');
+            }
+        } else if (userRole !== 'admin') {
+            throw new Error('Not authorized to update this booking');
+        }
+
+        // Avoid changing status through general update
+        delete updateData.status;
+        delete updateData.cancellationReason;
+        
+        return await this.bookingRepo.update(id, updateData);
+    }
+
+    async cancelBooking(id, reason, userRole, userId) {
+        const booking = await this.getBookingById(id);
+        
+        // Authorization check
+        if (userRole === 'vendor') {
+            if (booking.listingId.vendorId.toString() !== userId.toString()) {
+                throw new Error('Not authorized to cancel this booking');
+            }
+        } else if (userRole !== 'admin') {
+            throw new Error('Not authorized to cancel this booking');
+        }
+
+        if (!reason || reason.trim() === '') {
+            throw new Error('Cancellation reason is required');
+        }
+
+        const updateData = {
+            status: 'cancelled',
+            cancellationReason: reason
+        };
+
+        return await this.bookingRepo.update(id, updateData);
+    }
+
+    async deleteBooking(id, userRole, userId) {
+        const booking = await this.getBookingById(id);
+        
+        // Authorization check
+        if (userRole === 'vendor') {
+            if (booking.listingId.vendorId.toString() !== userId.toString()) {
+                throw new Error('Not authorized to delete this booking');
+            }
+        } else if (userRole !== 'admin') {
+            throw new Error('Not authorized to delete this booking');
+        }
+
+        if (booking.status !== 'cancelled') {
+            throw new Error('Only cancelled bookings can be deleted');
+        }
+
+        await this.bookingRepo.delete(id);
+        return true;
+    }
 }
 
 module.exports = BookingService;

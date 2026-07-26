@@ -78,10 +78,10 @@ export default function Dashboard() {
     <AdminLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
-        <div className="flex flex-wrap gap-2 md:gap-4 w-full sm:w-auto">
+        {/* <div className="flex flex-wrap gap-2 md:gap-4 w-full sm:w-auto">
           <button className="btn bg-white dark:bg-slate-800 border border-border dark:border-slate-700 text-slate-900 dark:text-white text-sm px-3 py-2 flex-1 sm:flex-none">Last 7 Days</button>
           <button className="btn btn-accent text-sm px-3 py-2 flex-1 sm:flex-none">Download Report</button>
-        </div>
+        </div> */}
       </div>
 
       {/* Main Stats */}

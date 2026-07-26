@@ -1,0 +1,396 @@
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+import AdminLayout from '../../../components/AdminLayout';
+import { useAuth } from '../../../context/AuthContext';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000/api';
+
+export default function EditListing() {
+    const router = useRouter();
+    const { id } = router.query;
+    const { user, token } = useAuth();
+    const [loading, setLoading] = useState(true);
+
+    // Default state for form data
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        type: 'hotel',
+        price: '',
+        location: '',
+        vendorId: '',
+        roomType: 'single',
+        totalRooms: '5',
+        movieTitle: '',
+        showTime: '',
+        seatRows: '10',
+        seatCols: '10',
+        area: '',
+        usageType: 'event',
+        totalUnits: '1',
+        vehicleType: 'car',
+        capacity: '',
+        features: ''
+    });
+
+    const [vendors, setVendors] = useState([]);
+
+    // Fetch vendors if user is admin
+    useEffect(() => {
+        if (user?.role === 'admin') {
+            fetchVendors();
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (id) {
+            fetchListingDetails();
+        }
+    }, [id]);
+
+    const fetchListingDetails = async () => {
+        try {
+            const res = await axios.get(`${API_BASE}/listings/${id}`);
+            const data = res.data;
+            setFormData({
+                title: data.title || '',
+                description: data.description || '',
+                type: data.type || 'hotel',
+                price: data.price || '',
+                location: data.location || '',
+                vendorId: data.vendorId?._id || data.vendorId || '',
+                roomType: data.details?.roomType || 'single',
+                totalRooms: data.details?.totalRooms || '5',
+                movieTitle: data.details?.movieTitle || '',
+                showTime: data.details?.showTime || '',
+                seatRows: data.details?.seatLayout?.rows || '10',
+                seatCols: data.details?.seatLayout?.cols || '10',
+                area: data.details?.area || '',
+                usageType: data.details?.usageType || 'event',
+                totalUnits: data.details?.totalUnits || '1',
+                vehicleType: data.details?.vehicleType || 'car',
+                capacity: data.details?.capacity || '',
+                features: data.details?.features?.join(', ') || '',
+                amenities: data.details?.amenities?.join(', ') || ''
+            });
+            setLoading(false);
+        } catch (err) {
+            console.error('Error fetching listing:', err);
+            toast.error('Failed to load listing details');
+            router.push('/listings');
+        }
+    };
+
+    const fetchVendors = async () => {
+        try {
+            const res = await axios.get(`${API_BASE}/admin/vendors`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            // Filter for approved vendors only
+            const vendorsData = Array.isArray(res.data) ? res.data : (res.data.vendors || []);
+            const approvedVendors = vendorsData.filter(v => v.role === 'vendor');
+            setVendors(approvedVendors);
+        } catch (err) {
+            console.error('Error fetching vendors:', err);
+        }
+    };
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const currentUserId = user?._id || user?.id;
+
+        if (!currentUserId) {
+            toast.error('Your session has expired. Please log in again.');
+            return;
+        }
+
+        // Determine vendorId: admin selects from dropdown, vendor uses their own ID
+        let selectedVendorId;
+        if (user.role === 'admin') {
+            selectedVendorId = formData.vendorId;
+            if (!selectedVendorId) {
+                toast.error('Please select a vendor for this listing');
+                return;
+            }
+        } else {
+            selectedVendorId = currentUserId;
+        }
+
+        const payload = {
+            ...formData,
+            vendorId: selectedVendorId,
+            price: Number(formData.price),
+            amenities: formData.amenities ? formData.amenities.split(',').map(s => s.trim()) : [],
+            features: formData.features ? formData.features.split(',').map(s => s.trim()) : [],
+            capacity: Number(formData.capacity),
+            area: Number(formData.area),
+            seatLayout: { 
+                rows: Number(formData.seatRows) || 10, 
+                cols: Number(formData.seatCols) || 10, 
+                aisles: [] 
+            },
+            totalRooms: Number(formData.totalRooms) || 5,
+            totalUnits: Number(formData.totalUnits) || 1,
+        };
+
+        try {
+            await axios.put(`${API_BASE}/listings/${id}`,
+                payload,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success('Listing updated successfully!');
+            router.push('/listings');
+        } catch (err) {
+            console.error(err);
+            toast.error(err.response?.data?.message || 'Error creating listing');
+        }
+    };
+
+    return (
+        <AdminLayout>
+            <div className="max-w-4xl mx-auto">
+                <header className="mb-8">
+                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">Edit Listing</h1>
+                    <p className="text-secondary mt-2 text-lg font-medium">Update the details of your service.</p>
+                </header>
+
+                {loading ? (
+                    <div className="card p-8 shadow-xl border border-border text-center">Loading...</div>
+                ) : (
+                <div className="card p-8 shadow-xl border border-border">
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        {/* Vendor Selection - Only for Admin */}
+                        {user?.role === 'admin' && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 p-6 rounded-2xl">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Assign to Vendor *</label>
+                                    <select
+                                        name="vendorId"
+                                        className="w-full p-4 rounded-xl border-2 border-blue-300 dark:border-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-all cursor-pointer"
+                                        onChange={handleChange}
+                                        value={formData.vendorId}
+                                        required
+                                    >
+                                        <option value="">Select a vendor...</option>
+                                        {vendors.map(vendor => (
+                                            <option key={vendor._id} value={vendor._id}>
+                                                {vendor.name} ({vendor.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">This listing will belong to the selected vendor</p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">Service Title</label>
+                                <input
+                                    type="text"
+                                    name="title"
+                                    className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all"
+                                    onChange={handleChange}
+                                    value={formData.title}
+                                    required
+                                    placeholder="e.g. Royal Suite"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">Service Category</label>
+                                <select
+                                    name="type"
+                                    className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold bg-white transition-all cursor-pointer"
+                                    onChange={handleChange}
+                                    value={formData.type}
+                                >
+                                    <option value="hotel">🏨 Hotel/Stay</option>
+                                    <option value="hostel">🏕️ Hostel</option>
+                                    <option value="cinema">🎬 Cinema/Movie</option>
+                                    <option value="space">🏢 Event Space</option>
+                                    <option value="vehicle">🚗 Vehicle Rental</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Description</label>
+                            <textarea
+                                name="description"
+                                rows="4"
+                                className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-medium transition-all"
+                                onChange={handleChange}
+                                value={formData.description}
+                                required
+                                placeholder="Describe your service in detail..."
+                            ></textarea>
+                        </div>
+
+                        {/* Category Specific Fields */}
+                        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-6 underline underline-offset-8">Category Specific Details</h3>
+
+                            {(formData.type === 'hotel' || formData.type === 'hostel') && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Room Type</label>
+                                        <select name="roomType" onChange={handleChange} value={formData.roomType} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold">
+                                            {formData.type === 'hotel' ? (
+                                                <>
+                                                    <option value="single">Single Room</option>
+                                                    <option value="double">Double Room</option>
+                                                    <option value="king">King Suite</option>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <option value="dormitory">Dormitory</option>
+                                                    <option value="private">Private Room</option>
+                                                    <option value="mixed">Mixed Dorm</option>
+                                                </>
+                                            )}
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Total Rooms</label>
+                                        <input type="number" name="totalRooms" min="1" value={formData.totalRooms} onChange={handleChange} placeholder="e.g. 10" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Amenities (comma sep.)</label>
+                                        <input type="text" name="amenities" value={formData.amenities} onChange={handleChange} placeholder="WiFi, Pool, Spa" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {formData.type === 'cinema' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Movie Title</label>
+                                        <input type="text" name="movieTitle" value={formData.movieTitle} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Show Time</label>
+                                        <input type="datetime-local" name="showTime" value={formData.showTime} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Seat Rows</label>
+                                        <input type="number" name="seatRows" min="1" max="20" value={formData.seatRows} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Seat Columns</label>
+                                        <input type="number" name="seatCols" min="1" max="20" value={formData.seatCols} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {formData.type === 'space' && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Area (sq ft)</label>
+                                        <input type="number" name="area" value={formData.area} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Usage Type</label>
+                                        <select name="usageType" onChange={handleChange} value={formData.usageType} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold">
+                                            <option value="event">Event</option>
+                                            <option value="storage">Storage</option>
+                                            <option value="office">Office</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Total Units / Sections</label>
+                                        <input type="number" name="totalUnits" min="1" value={formData.totalUnits} onChange={handleChange} placeholder="e.g. 3" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {formData.type === 'vehicle' && (
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Vehicle Type</label>
+                                        <select name="vehicleType" onChange={handleChange} value={formData.vehicleType} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold">
+                                            <option value="car">Car</option>
+                                            <option value="van">Van</option>
+                                            <option value="bus">Bus</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Seating Capacity</label>
+                                        <input type="number" name="capacity" value={formData.capacity} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Total Vehicles</label>
+                                        <input type="number" name="totalUnits" min="1" value={formData.totalUnits} onChange={handleChange} placeholder="e.g. 5" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Features</label>
+                                        <input type="text" name="features" value={formData.features} onChange={handleChange} placeholder="AC, GPS, Auto" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">Price per Unit ($)</label>
+                                <input
+                                    type="number"
+                                    name="price"
+                                    className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold"
+                                    onChange={handleChange}
+                                    value={formData.price}
+                                    required
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">Location</label>
+                                <input
+                                    type="text"
+                                    name="location"
+                                    className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold"
+                                    onChange={handleChange}
+                                    value={formData.location}
+                                    required
+                                    placeholder="City, Province, Country"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-8 flex flex-col sm:flex-row gap-6">
+                            <button type="submit" className="btn-primary bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex-1 sm:flex-none">
+                                🚀 Save Changes
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => router.back()}
+                                className="bg-slate-100 text-slate-700 px-12 py-5 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-all flex-1 sm:flex-none"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                )}
+            </div>
+
+            <style jsx>{`
+                .card {
+                    border-radius: 2rem;
+                }
+                .text-secondary {
+                    color: #64748b;
+                }
+                :global(.dark) .text-secondary {
+                    color: #94a3b8;
+                }
+            `}</style>
+        </AdminLayout>
+    );
+}

@@ -47,7 +47,15 @@ class BookingRepository {
     }
     
     async findById(id) {
-        return await Booking.findById(id);
+        return await Booking.findById(id).populate('listingId').populate('userId', 'name email');
+    }
+
+    async update(id, updateData) {
+        return await Booking.findByIdAndUpdate(id, updateData, { new: true });
+    }
+
+    async delete(id) {
+        return await Booking.findByIdAndDelete(id);
     }
 }
 
