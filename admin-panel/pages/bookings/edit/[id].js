@@ -4,6 +4,10 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import AdminLayout from '../../../components/AdminLayout';
 import { useAuth } from '../../../context/AuthContext';
+import {
+    Save, ArrowLeft, Calendar, Phone, DollarSign,
+    BedDouble, Users, Car, MapPin, Clapperboard, CheckCircle2
+} from 'lucide-react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000/api';
 
@@ -12,7 +16,9 @@ export default function EditBooking() {
     const { id } = router.query;
     const { user, token } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [booking, setBooking] = useState(null);
+    const [isDirty, setIsDirty] = useState(false);
 
     const [formData, setFormData] = useState({
         totalPrice: '',
@@ -28,9 +34,7 @@ export default function EditBooking() {
     });
 
     useEffect(() => {
-        if (id) {
-            fetchBookingDetails();
-        }
+        if (id) fetchBookingDetails();
     }, [id]);
 
     const fetchBookingDetails = async () => {
@@ -62,12 +66,13 @@ export default function EditBooking() {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+        setIsDirty(true);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSaving(true);
 
-        // Reconstruct the details object based on what was provided
         const details = { ...booking.details };
         if (formData.checkIn) details.checkIn = formData.checkIn;
         if (formData.checkOut) details.checkOut = formData.checkOut;
@@ -85,22 +90,29 @@ export default function EditBooking() {
         };
 
         try {
-            await axios.put(`${API_BASE}/bookings/${id}`,
-                payload,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await axios.put(`${API_BASE}/bookings/${id}`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             toast.success('Booking updated successfully!');
+            setIsDirty(false);
             router.push('/bookings');
         } catch (err) {
             console.error(err);
             toast.error(err.response?.data?.message || 'Error updating booking');
+        } finally {
+            setSaving(false);
         }
     };
 
     if (loading) {
         return (
             <AdminLayout>
-                <div className="card p-8 shadow-xl border border-border text-center">Loading...</div>
+                <div className="max-w-4xl mx-auto">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-12 text-center animate-pulse">
+                        <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-48 mx-auto mb-3" />
+                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-32 mx-auto" />
+                    </div>
+                </div>
             </AdminLayout>
         );
     }
@@ -109,124 +121,259 @@ export default function EditBooking() {
 
     const type = booking.listingId?.type;
 
+    const labelClass = 'block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2';
+    const inputClass = 'w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all';
+
+    const getStatusBadge = (status) => {
+        const map = {
+            confirmed: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+            pending: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800',
+            cancelled: 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800',
+        };
+        return map[status] || map.pending;
+    };
+
     return (
         <AdminLayout>
             <div className="max-w-4xl mx-auto">
-                <header className="mb-8">
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">Edit Booking</h1>
-                    <p className="text-secondary mt-2 text-lg font-medium">Update reservation details for #{booking._id.slice(-6).toUpperCase()}</p>
-                </header>
-
-                <div className="card p-8 shadow-xl border border-border">
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">Total Price ($)</label>
-                                <input
-                                    type="number"
-                                    name="totalPrice"
-                                    className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all"
-                                    onChange={handleChange}
-                                    value={formData.totalPrice}
-                                    required
-                                />
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">Guest Phone</label>
-                                <input
-                                    type="text"
-                                    name="phone"
-                                    className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all"
-                                    onChange={handleChange}
-                                    value={formData.phone}
-                                />
-                            </div>
+                {/* Header */}
+                <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-3 mb-1">
+                            <button
+                                onClick={() => router.back()}
+                                className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                            </button>
+                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
+                                Edit Booking
+                            </h1>
                         </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 ml-11">
+                            Reservation <span className="font-bold text-slate-700 dark:text-slate-300">#{booking._id.slice(-6).toUpperCase()}</span>
+                            {' · '}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${getStatusBadge(booking.status)}`}>
+                                {booking.status}
+                            </span>
+                        </p>
+                    </div>
 
-                        {/* Category Specific Booking Details */}
-                        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-6 underline underline-offset-8">Booking Details</h3>
+                    {/* Unsaved indicator */}
+                    {isDirty && (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-400 animate-pulse">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+                            Unsaved changes
+                        </div>
+                    )}
+                </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {(type === 'hotel' || type === 'hostel') && (
-                                    <>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Check-In</label>
-                                            <input type="date" name="checkIn" value={formData.checkIn} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Check-Out</label>
-                                            <input type="date" name="checkOut" value={formData.checkOut} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Room Number</label>
-                                            <input type="text" name="roomNumber" value={formData.roomNumber} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
-                                        </div>
-                                    </>
-                                )}
+                <form onSubmit={handleSubmit}>
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
 
-                                {type === 'cinema' && (
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Date</label>
-                                        <input type="date" name="date" value={formData.date} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
-                                    </div>
-                                )}
-
-                                {type === 'vehicle' && (
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Pickup Date</label>
-                                        <input type="date" name="pickupDate" value={formData.pickupDate} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
-                                    </div>
-                                )}
-
-                                {type === 'space' && (
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Event Date</label>
-                                        <input type="date" name="eventDate" value={formData.eventDate} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
-                                    </div>
-                                )}
-
-                                {(type === 'space' || type === 'vehicle') && (
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Unit Number</label>
-                                        <input type="text" name="unitNumber" value={formData.unitNumber} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
-                                    </div>
-                                )}
-
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Guests</label>
-                                    <input type="number" name="guests" value={formData.guests} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                        {/* Booking Reference Banner */}
+                        <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40 flex items-center justify-between gap-4 flex-wrap">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-black text-sm flex items-center justify-center shadow-md shadow-indigo-100 dark:shadow-none">
+                                    #{booking._id.slice(-2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p className="font-bold text-slate-900 dark:text-white text-sm">
+                                        {booking.listingId?.title || 'Unknown Listing'}
+                                    </p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize mt-0.5">
+                                        {booking.listingId?.type || 'Booking'} · {booking.userId?.name || booking.details?.customerName || 'Guest'}
+                                    </p>
                                 </div>
                             </div>
+                            <div className="text-right">
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Booked on</p>
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                    {new Date(booking.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="pt-8 flex flex-col sm:flex-row gap-6">
-                            <button type="submit" className="btn-primary bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex-1 sm:flex-none">
-                                🚀 Save Changes
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => router.back()}
-                                className="bg-slate-100 text-slate-700 px-12 py-5 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-all flex-1 sm:flex-none"
-                            >
-                                Cancel
-                            </button>
+                        <div className="p-6 md:p-8 space-y-8">
+
+                            {/* Financials & Contact */}
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">General Info</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div>
+                                        <label className={labelClass}>
+                                            <span className="inline-flex items-center gap-1.5">
+                                                <DollarSign className="w-3.5 h-3.5 text-indigo-500" />
+                                                Total Price
+                                            </span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="totalPrice"
+                                            className={inputClass}
+                                            onChange={handleChange}
+                                            value={formData.totalPrice}
+                                            required
+                                            min="0"
+                                            step="0.01"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>
+                                            <span className="inline-flex items-center gap-1.5">
+                                                <Phone className="w-3.5 h-3.5 text-indigo-500" />
+                                                Guest Phone
+                                            </span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            className={inputClass}
+                                            onChange={handleChange}
+                                            value={formData.phone}
+                                            placeholder="+94..."
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Booking Details — type-specific */}
+                            <div className="pt-6 border-t border-slate-100 dark:border-slate-700">
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Booking Details</p>
+                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/60 p-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                                        {(type === 'hotel' || type === 'hostel') && (<>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                                                        Check-In
+                                                    </span>
+                                                </label>
+                                                <input type="date" name="checkIn" value={formData.checkIn} onChange={handleChange} className={inputClass} />
+                                            </div>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                                                        Check-Out
+                                                    </span>
+                                                </label>
+                                                <input type="date" name="checkOut" value={formData.checkOut} onChange={handleChange} className={inputClass} />
+                                            </div>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <BedDouble className="w-3.5 h-3.5 text-indigo-500" />
+                                                        Room Number
+                                                    </span>
+                                                </label>
+                                                <input type="text" name="roomNumber" value={formData.roomNumber} onChange={handleChange} className={inputClass} placeholder="e.g. 204" />
+                                            </div>
+                                        </>)}
+
+                                        {type === 'cinema' && (
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <Clapperboard className="w-3.5 h-3.5 text-indigo-500" />
+                                                        Show Date
+                                                    </span>
+                                                </label>
+                                                <input type="date" name="date" value={formData.date} onChange={handleChange} className={inputClass} />
+                                            </div>
+                                        )}
+
+                                        {type === 'vehicle' && (
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <Car className="w-3.5 h-3.5 text-indigo-500" />
+                                                        Pickup Date
+                                                    </span>
+                                                </label>
+                                                <input type="date" name="pickupDate" value={formData.pickupDate} onChange={handleChange} className={inputClass} />
+                                            </div>
+                                        )}
+
+                                        {type === 'space' && (
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                                                        Event Date
+                                                    </span>
+                                                </label>
+                                                <input type="date" name="eventDate" value={formData.eventDate} onChange={handleChange} className={inputClass} />
+                                            </div>
+                                        )}
+
+                                        {(type === 'space' || type === 'vehicle') && (
+                                            <div>
+                                                <label className={labelClass}>Unit Number</label>
+                                                <input type="text" name="unitNumber" value={formData.unitNumber} onChange={handleChange} className={inputClass} placeholder="e.g. V-01" />
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className={labelClass}>
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <Users className="w-3.5 h-3.5 text-indigo-500" />
+                                                    Guests
+                                                </span>
+                                            </label>
+                                            <input type="number" name="guests" value={formData.guests} onChange={handleChange} className={inputClass} min="1" placeholder="1" />
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="pt-6 border-t border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center gap-3">
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:from-indigo-400 disabled:to-purple-400 text-white font-bold text-sm shadow-lg shadow-indigo-200 dark:shadow-none cursor-pointer transition-all transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
+                                >
+                                    {saving ? (
+                                        <>
+                                            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                            Saving changes...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="w-4 h-4" />
+                                            Save Changes
+                                        </>
+                                    )}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => router.back()}
+                                    disabled={saving}
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-bold text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    Cancel
+                                </button>
+
+                                {isDirty && !saving && (
+                                    <p className="text-xs text-amber-600 dark:text-amber-400 font-medium sm:ml-auto">
+                                        You have unsaved changes
+                                    </p>
+                                )}
+                            </div>
+
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
-
-            <style jsx>{`
-                .card {
-                    border-radius: 2rem;
-                }
-                .text-secondary {
-                    color: #64748b;
-                }
-                :global(.dark) .text-secondary {
-                    color: #94a3b8;
-                }
-            `}</style>
         </AdminLayout>
     );
 }

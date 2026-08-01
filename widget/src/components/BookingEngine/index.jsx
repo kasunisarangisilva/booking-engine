@@ -48,9 +48,9 @@ function BookingEngineInner() {
         businessType: '',
         name: '',
         email: '',
-        propertyType: '',
-        rooms: '',
-        country: '',
+        phone: '',
+        location: '',
+        specialRequirements: '',
         selectedListing: null,
         bookingDetails: {},
         paymentMethod: 'card'
@@ -167,6 +167,8 @@ function BookingEngineInner() {
                         customerEmail: formData.email || '',  // real contact email
                         customerName: formData.name || 'Guest',
                         customerPhone: formData.phone || '',
+                        customerLocation: formData.location || '',
+                        specialRequirements: formData.specialRequirements || '',
                     },
                     paymentMethod: formData.paymentMethod || 'card',
                     totalPrice: selectedListing.price,
@@ -206,7 +208,7 @@ function BookingEngineInner() {
             case 3: return <StepListingSelection formData={formData} updateFormData={updateFormData} />;
             case 4: return <StepBookingUI formData={formData} updateFormData={updateFormData} availability={availability} />;
             case 5: return <StepPayment formData={formData} updateFormData={updateFormData} />;
-            case 6: return <ConfirmationStep formData={formData} onRestart={() => { setStep(1); setFormData({ businessType: '', name: '', email: '', propertyType: '', rooms: '', country: '', selectedListing: null, bookingDetails: {}, paymentMethod: 'card' }); }} />;
+            case 6: return <ConfirmationStep formData={formData} onRestart={() => { setStep(1); setFormData({ businessType: '', name: '', email: '', phone: '', location: '', specialRequirements: '', selectedListing: null, bookingDetails: {}, paymentMethod: 'card' }); }} />;
             default: return <StepTypeSelection formData={formData} updateFormData={updateFormData} />;
         }
     };
@@ -218,7 +220,6 @@ function BookingEngineInner() {
         <div className="booking-engine-root" style={cssVars}>
             {/* Theme Panel */}
             <ThemeSettingsPanel />
-
             {/* Header */}
             <header style={{
                 position: 'absolute', top: 0, left: 0, right: 0, zIndex: 60,
@@ -267,7 +268,6 @@ function BookingEngineInner() {
                     >
                         🎨
                     </button>
-
                     {/* Close button */}
                     <button
                         onClick={() => setShowConfirmClose(true)}
@@ -439,18 +439,6 @@ function BookingEngineInner() {
 }
 
 function ConfirmationStep({ formData, onRestart }) {
-    const [showEmbed, setShowEmbed] = useState(false);
-    const { themeKey, fontId, radiusId } = useTheme();
-
-    const embedCode = `<!-- BookEngine Widget -->
-<script src="https://booking-engine-widget.vercel.app/loader.js"></script>
-<booking-engine
-    data-account-id="YOUR_ACCOUNT_ID"
-    data-theme="${themeKey}"
-    data-font="${fontId}"
-    data-radius="${radiusId}"
-></booking-engine>`;
-
     return (
         <div className="w-step-enter" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto', padding: '0 16px' }}>
             {/* Animated success icon */}
@@ -517,42 +505,7 @@ function ConfirmationStep({ formData, onRestart }) {
                 >
                     New Booking
                 </button>
-                <button
-                    onClick={() => setShowEmbed(!showEmbed)}
-                    style={{
-                        padding: '14px 28px',
-                        borderRadius: 'var(--w-radius)',
-                        background: 'var(--w-input-bg)',
-                        color: 'var(--w-text)',
-                        fontWeight: 700, fontSize: 15,
-                        border: '1px solid var(--w-border)',
-                        cursor: 'pointer',
-                        fontFamily: 'var(--w-font)',
-                        transition: 'all var(--w-transition)',
-                    }}
-                >
-                    {showEmbed ? 'Hide Code' : 'Get Embed Code'}
-                </button>
             </div>
-
-            {showEmbed && (
-                <div className="w-step-enter-fast">
-                    <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--w-text-muted)', marginBottom: 12 }}>
-                        Add to your website
-                    </p>
-                    <div className="w-code-card" style={{ textAlign: 'left' }}>
-                        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all', color: '#94a3b8' }}>
-                            {embedCode}
-                        </pre>
-                        <button className="w-copy-btn" onClick={() => {
-                            navigator.clipboard.writeText(embedCode);
-                            alert('Copied!');
-                        }}>
-                            Copy
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

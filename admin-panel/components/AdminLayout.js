@@ -26,14 +26,14 @@ export default function AdminLayout({ children }) {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-white transition-colors duration-300">
+        <div className="h-screen overflow-hidden bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-white transition-colors duration-300 flex flex-col">
             <Header toggleSidebar={toggleSidebar} />
-            <div className="flex pt-16 min-h-screen">
+            <div className="flex flex-1 overflow-hidden pt-16">
                 <Sidebar
                     isOpen={isSidebarOpen}
                     closeSidebar={() => setIsSidebarOpen(false)}
                 />
-                <main className="flex-1 w-full lg:ml-0 p-4 md:p-8 overflow-y-auto">
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:pl-72">
                     {children}
                 </main>
             </div>

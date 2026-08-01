@@ -24,8 +24,10 @@ class AuthService {
             throw new Error('User already exists');
         }
 
+        const userStatus = role === 'vendor' ? 'pending' : 'active';
+
         const newUser = await this.authRepository.createUser({
-            name, email, password, role, phone
+            name, email, password, role, phone, status: userStatus
         });
 
         const token = this.generateToken(newUser._id, newUser.role);
@@ -57,6 +59,18 @@ class AuthService {
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             throw new Error('Invalid credentials');
+        }
+
+        if (user.role === 'vendor') {
+            if (user.status === 'pending') {
+                throw new Error('Your vendor account is pending approval by an admin');
+            }
+            if (user.status === 'suspended') {
+                throw new Error('Your account has been suspended by an admin');
+            }
+            if (user.status === 'inactive') {
+                throw new Error('Your account is currently inactive');
+            }
         }
 
         const token = this.generateToken(user._id, user.role);

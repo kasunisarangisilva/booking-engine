@@ -78,9 +78,21 @@ export default function ViewBooking() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-border pb-8">
                         <div>
                             <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Guest</h3>
-                            <p className="text-xl font-bold text-slate-900 dark:text-white">{booking.userId?.name || 'Guest User'}</p>
-                            <p className="text-secondary">{booking.userId?.email || 'N/A'}</p>
-                            <p className="text-secondary">{booking.phone || 'No phone provided'}</p>
+                            <p className="text-xl font-bold text-slate-900 dark:text-white">
+                                {booking.userId?.name || booking.details?.customerName || 'Guest User'}
+                            </p>
+                            <p className="text-secondary">
+                                {/* Show real contact email for widget guests */}
+                                {booking.details?.customerEmail || booking.userId?.email || 'N/A'}
+                            </p>
+                            <p className="text-secondary">
+                                {booking.details?.customerPhone || booking.phone || 'No phone provided'}
+                            </p>
+                            {booking.details?.customerLocation && (
+                                <p className="text-secondary flex items-center gap-1 mt-1">
+                                    📍 {booking.details.customerLocation}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Status</h3>
@@ -172,6 +184,16 @@ export default function ViewBooking() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Special Requirements */}
+                        {booking.details?.specialRequirements && (
+                            <div className="mt-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-2">✨ Special Requirements</h4>
+                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
+                                    {booking.details.specialRequirements}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Financials */}

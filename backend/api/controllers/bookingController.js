@@ -95,6 +95,16 @@ const BookingController = {
             console.error('Delete booking error:', error);
             res.status(400).json({ message: error.message });
         }
+    },
+
+    async getCustomers(req, res) {
+        try {
+            const customers = await bookingService.getCustomers(req.user.role, req.user._id);
+            res.status(200).json({ success: true, customers });
+        } catch (error) {
+            console.error('Get customers error:', error);
+            res.status(500).json({ message: 'Server error' });
+        }
     }
 };
 
