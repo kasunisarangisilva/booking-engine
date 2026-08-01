@@ -65,6 +65,14 @@ export const AuthProvider = ({ children }) => {
             const { token, user } = res.data;
             const normalizedUser = { ...user, _id: user._id || user.id };
 
+            if (normalizedUser.role === 'vendor' && normalizedUser.status === 'pending') {
+                return {
+                    success: true,
+                    pendingApproval: true,
+                    message: 'Your vendor account has been registered and is pending Super Admin approval. You will be able to sign in once your account is approved.'
+                };
+            }
+
             setToken(token);
             setUser(normalizedUser);
 
@@ -78,6 +86,13 @@ export const AuthProvider = ({ children }) => {
                 message: error.response?.data?.message || 'Signup failed'
             };
         }
+    };
+
+    const logout = () => {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
     };
 
     useEffect(() => {
@@ -113,15 +128,18 @@ export const AuthProvider = ({ children }) => {
         }
     }, [token]);
 
-    const logout = () => {
-        setToken(null);
-        setUser(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    const updateUser = (updatedUser, newToken) => {
+        const normalizedUser = { ...updatedUser, _id: updatedUser._id || updatedUser.id };
+        setUser(normalizedUser);
+        localStorage.setItem('user', JSON.stringify(normalizedUser));
+        if (newToken) {
+            setToken(newToken);
+            localStorage.setItem('token', newToken);
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, login, signup, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

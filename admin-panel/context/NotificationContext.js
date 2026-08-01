@@ -132,6 +132,20 @@ export const NotificationProvider = ({ children }) => {
         }
     };
 
+    const deleteNotification = async (id) => {
+        try {
+            setNotifications(prev => prev.filter(n => (n._id || n.id) !== id));
+
+            await fetch(`${API_BASE}/notifications/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch (error) {
+            console.error('Error deleting notification', error);
+            fetchNotifications();
+        }
+    };
+
     return (
         <NotificationContext.Provider value={{
             notifications,
@@ -141,7 +155,8 @@ export const NotificationProvider = ({ children }) => {
             closeDrawer,
             markAsRead,
             markAllAsRead,
-            clearNotifications
+            clearNotifications,
+            deleteNotification
         }}>
             {children}
         </NotificationContext.Provider>

@@ -61,29 +61,41 @@ class PaymentService {
     async notifyBookingConfirmed(booking, io) {
         try {
             const listing = await Listing.findById(booking.listingId);
-            if (!listing) return;
+            if (!listing || !listing.vendorId) return;
 
-            // Admin Notif
-            const adminNotif = new Notification({
-                recipient: 'admin',
-                type: 'booking_confirmed',
-                message: `Booking confirmed for ${listing.title}`,
-                data: { bookingId: booking._id, listingId: listing._id }
+            const vendorIdStr = listing.vendorId.toString();
+
+            // Prevent duplicate notifications for the same booking
+            const existingNotif = await Notification.findOne({
+                recipient: vendorIdStr,
+                'data.bookingId': booking._id
             });
-            await adminNotif.save();
-            io.to('admin').emit('notification', { ...adminNotif.toObject(), data: booking });
+            if (existingNotif) {
+                return; // Already notified, skip
+            }
 
-            // Vendor Notif
+            // Get customer name from booking details or populated user object
+            const bookingWithUser = await Booking.findById(booking._id).populate('userId', 'name email');
+            const customerName = booking.details?.customerName || bookingWithUser?.userId?.name || 'Customer';
+
+            // Send notification ONLY to the listing's vendor with customer name
             const vendorNotif = new Notification({
-                recipient: listing.vendorId.toString(),
+                recipient: vendorIdStr,
                 type: 'booking_confirmed',
-                message: `Payment received for ${listing.title}. Booking confirmed.`,
-                data: { bookingId: booking._id, listingId: listing._id }
+                message: `New booking confirmed for "${listing.title}" by ${customerName}.`,
+                data: {
+                    bookingId: booking._id,
+                    listingId: listing._id,
+                    customerName: customerName
+                }
             });
             await vendorNotif.save();
-            io.to(`vendor_${listing.vendorId}`).emit('notification', { ...vendorNotif.toObject(), data: booking });
 
-            // SMS
+            if (io) {
+                io.to(`vendor_${vendorIdStr}`).emit('notification', { ...vendorNotif.toObject(), data: bookingWithUser || booking });
+            }
+
+            // SMS Notification
             const bookingWithListing = await Booking.findById(booking._id).populate('listingId');
             await smsService.sendBookingConfirmation(bookingWithListing);
         } catch (error) {

@@ -4,14 +4,25 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import AdminLayout from '../../components/AdminLayout';
 import { useAuth } from '../../context/AuthContext';
+import {
+    Rocket,
+    ArrowLeft,
+    Building2,
+    DollarSign,
+    MapPin,
+    Tag,
+    UserCheck,
+    FileText,
+    Sparkles
+} from 'lucide-react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000/api';
 
 export default function CreateListing() {
     const router = useRouter();
     const { user, token } = useAuth();
+    const [submitting, setSubmitting] = useState(false);
 
-    // Default state for form data
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -30,12 +41,12 @@ export default function CreateListing() {
         totalUnits: '1',
         vehicleType: 'car',
         capacity: '',
-        features: ''
+        features: '',
+        amenities: ''
     });
 
     const [vendors, setVendors] = useState([]);
 
-    // Fetch vendors if user is admin
     useEffect(() => {
         if (user?.role === 'admin') {
             fetchVendors();
@@ -47,7 +58,6 @@ export default function CreateListing() {
             const res = await axios.get(`${API_BASE}/admin/vendors`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            // Filter for approved vendors only
             const vendorsData = Array.isArray(res.data) ? res.data : (res.data.vendors || []);
             const approvedVendors = vendorsData.filter(v => v.role === 'vendor');
             setVendors(approvedVendors);
@@ -62,7 +72,6 @@ export default function CreateListing() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         const currentUserId = user?._id || user?.id;
 
         if (!currentUserId) {
@@ -70,7 +79,6 @@ export default function CreateListing() {
             return;
         }
 
-        // Determine vendorId: admin selects from dropdown, vendor uses their own ID
         let selectedVendorId;
         if (user.role === 'admin') {
             selectedVendorId = formData.vendorId;
@@ -82,6 +90,8 @@ export default function CreateListing() {
             selectedVendorId = currentUserId;
         }
 
+        setSubmitting(true);
+
         const payload = {
             ...formData,
             vendorId: selectedVendorId,
@@ -90,10 +100,10 @@ export default function CreateListing() {
             features: formData.features ? formData.features.split(',').map(s => s.trim()) : [],
             capacity: Number(formData.capacity),
             area: Number(formData.area),
-            seatLayout: { 
-                rows: Number(formData.seatRows) || 10, 
-                cols: Number(formData.seatCols) || 10, 
-                aisles: [] 
+            seatLayout: {
+                rows: Number(formData.seatRows) || 10,
+                cols: Number(formData.seatCols) || 10,
+                aisles: []
             },
             totalRooms: Number(formData.totalRooms) || 5,
             totalUnits: Number(formData.totalUnits) || 1,
@@ -109,93 +119,115 @@ export default function CreateListing() {
         } catch (err) {
             console.error(err);
             toast.error(err.response?.data?.message || 'Error creating listing');
+        } finally {
+            setSubmitting(false);
         }
     };
 
     return (
         <AdminLayout>
             <div className="max-w-4xl mx-auto">
-                <header className="mb-8">
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">Create New Listing</h1>
-                    <p className="text-secondary mt-2 text-lg font-medium">Add a new service to the booking engine platform.</p>
-                </header>
+                <div className="flex items-center gap-3 mb-6">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-2xs"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
+                            Create New Listing
+                        </h1>
+                        <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">
+                            Add a new property or service listing to the booking platform.
+                        </p>
+                    </div>
+                </div>
 
-                <div className="card p-8 shadow-xl border border-border">
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* Vendor Selection - Only for Admin */}
+                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Admin Vendor Selection */}
                         {user?.role === 'admin' && (
-                            <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 p-6 rounded-2xl">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Assign to Vendor *</label>
-                                    <select
-                                        name="vendorId"
-                                        className="w-full p-4 rounded-xl border-2 border-blue-300 dark:border-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-all cursor-pointer"
-                                        onChange={handleChange}
-                                        value={formData.vendorId}
-                                        required
-                                    >
-                                        <option value="">Select a vendor...</option>
-                                        {vendors.map(vendor => (
-                                            <option key={vendor._id} value={vendor._id}>
-                                                {vendor.name} ({vendor.email})
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">This listing will belong to the selected vendor</p>
-                                </div>
+                            <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 mb-2">
+                                    Assign to Vendor *
+                                </label>
+                                <select
+                                    name="vendorId"
+                                    className="w-full p-3 rounded-xl border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                                    onChange={handleChange}
+                                    value={formData.vendorId}
+                                    required
+                                >
+                                    <option value="">Select a vendor...</option>
+                                    {vendors.map(vendor => (
+                                        <option key={vendor._id} value={vendor._id}>
+                                            {vendor.name} ({vendor.email})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">Service Title</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                                    Service Title *
+                                </label>
                                 <input
                                     type="text"
                                     name="title"
-                                    className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all"
+                                    className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                                     onChange={handleChange}
                                     required
-                                    placeholder="e.g. Royal Suite"
+                                    placeholder="e.g. Grand Luxury Suite"
                                 />
                             </div>
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">Service Category</label>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                                    Category *
+                                </label>
                                 <select
                                     name="type"
-                                    className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold bg-white transition-all cursor-pointer"
+                                    className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer transition-all"
                                     onChange={handleChange}
                                     value={formData.type}
                                 >
-                                    <option value="hotel">🏨 Hotel/Stay</option>
+                                    <option value="hotel">🏨 Hotel / Stay</option>
                                     <option value="hostel">🏕️ Hostel</option>
-                                    <option value="cinema">🎬 Cinema/Movie</option>
+                                    <option value="cinema">🎬 Cinema / Movie</option>
                                     <option value="space">🏢 Event Space</option>
                                     <option value="vehicle">🚗 Vehicle Rental</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Description</label>
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                                Description *
+                            </label>
                             <textarea
                                 name="description"
                                 rows="4"
-                                className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-medium transition-all"
+                                className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                                 onChange={handleChange}
                                 required
-                                placeholder="Describe your service in detail..."
+                                placeholder="Describe your service, features, rules, and amenities in detail..."
                             ></textarea>
                         </div>
 
-                        {/* Category Specific Fields */}
-                        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-6 underline underline-offset-8">Category Specific Details</h3>
+                        {/* Category Specific Details */}
+                        <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-4 flex items-center gap-1.5">
+                                <Sparkles className="w-4 h-4" /> Category Details
+                            </h3>
 
                             {(formData.type === 'hotel' || formData.type === 'hostel') && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Room Type</label>
-                                        <select name="roomType" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Room Type</label>
+                                        <select name="roomType" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold">
                                             {formData.type === 'hotel' ? (
                                                 <>
                                                     <option value="single">Single Room</option>
@@ -211,137 +243,124 @@ export default function CreateListing() {
                                             )}
                                         </select>
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Total Rooms</label>
-                                        <input type="number" name="totalRooms" min="1" value={formData.totalRooms} onChange={handleChange} placeholder="e.g. 10" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Total Rooms</label>
+                                        <input type="number" name="totalRooms" min="1" value={formData.totalRooms} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Amenities (comma sep.)</label>
-                                        <input type="text" name="amenities" onChange={handleChange} placeholder="WiFi, Pool, Spa" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Amenities</label>
+                                        <input type="text" name="amenities" onChange={handleChange} placeholder="WiFi, Pool, Spa" className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                 </div>
                             )}
 
                             {formData.type === 'cinema' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Movie Title</label>
-                                        <input type="text" name="movieTitle" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Movie Title</label>
+                                        <input type="text" name="movieTitle" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Show Time</label>
-                                        <input type="datetime-local" name="showTime" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Seat Rows</label>
-                                        <input type="number" name="seatRows" min="1" max="20" value={formData.seatRows} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Seat Columns</label>
-                                        <input type="number" name="seatCols" min="1" max="20" value={formData.seatCols} onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Show Time</label>
+                                        <input type="datetime-local" name="showTime" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                 </div>
                             )}
 
                             {formData.type === 'space' && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Area (sq ft)</label>
-                                        <input type="number" name="area" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Area (sq ft)</label>
+                                        <input type="number" name="area" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Usage Type</label>
-                                        <select name="usageType" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Usage Type</label>
+                                        <select name="usageType" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold">
                                             <option value="event">Event</option>
                                             <option value="storage">Storage</option>
                                             <option value="office">Office</option>
                                         </select>
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Total Units / Sections</label>
-                                        <input type="number" name="totalUnits" min="1" value={formData.totalUnits} onChange={handleChange} placeholder="e.g. 3" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Total Sections</label>
+                                        <input type="number" name="totalUnits" min="1" value={formData.totalUnits} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                 </div>
                             )}
 
                             {formData.type === 'vehicle' && (
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Vehicle Type</label>
-                                        <select name="vehicleType" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Vehicle Type</label>
+                                        <select name="vehicleType" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold">
                                             <option value="car">Car</option>
                                             <option value="van">Van</option>
                                             <option value="bus">Bus</option>
                                         </select>
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Seating Capacity</label>
-                                        <input type="number" name="capacity" onChange={handleChange} className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Capacity</label>
+                                        <input type="number" name="capacity" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Total Vehicles</label>
-                                        <input type="number" name="totalUnits" min="1" value={formData.totalUnits} onChange={handleChange} placeholder="e.g. 5" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">Features</label>
-                                        <input type="text" name="features" onChange={handleChange} placeholder="AC, GPS, Auto" className="p-3 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-bold" />
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Features</label>
+                                        <input type="text" name="features" onChange={handleChange} placeholder="AC, GPS, Driver" className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">Price per Unit ($)</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                                    Price ($) *
+                                </label>
                                 <input
                                     type="number"
                                     name="price"
-                                    className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold"
+                                    className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                                     onChange={handleChange}
                                     required
                                     placeholder="0.00"
                                 />
                             </div>
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">Location</label>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                                    Location *
+                                </label>
                                 <input
                                     type="text"
                                     name="location"
-                                    className="w-full p-4 rounded-xl border border-border focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold"
+                                    className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                                     onChange={handleChange}
                                     required
-                                    placeholder="City, Province, Country"
+                                    placeholder="City, Country"
                                 />
                             </div>
                         </div>
 
-                        <div className="pt-8 flex flex-col sm:flex-row gap-6">
-                            <button type="submit" className="btn-primary bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex-1 sm:flex-none">
-                                🚀 Publish Listing
-                            </button>
+                        {/* Action Buttons */}
+                        <div className="pt-6 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-3">
                             <button
                                 type="button"
                                 onClick={() => router.back()}
-                                className="bg-slate-100 text-slate-700 px-12 py-5 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-all flex-1 sm:flex-none"
+                                className="px-6 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer transition-colors"
                             >
                                 Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={submitting}
+                                className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-indigo-200 dark:shadow-none cursor-pointer transition-all transform active:scale-95 disabled:opacity-50"
+                            >
+                                <Rocket className="w-4 h-4" />
+                                {submitting ? 'Publishing...' : 'Publish Listing'}
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
-
-            <style jsx>{`
-                .card {
-                    border-radius: 2rem;
-                }
-                .text-secondary {
-                    color: #64748b;
-                }
-                :global(.dark) .text-secondary {
-                    color: #94a3b8;
-                }
-            `}</style>
         </AdminLayout>
     );
 }

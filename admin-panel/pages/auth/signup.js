@@ -12,6 +12,7 @@ export default function Signup() {
         phone: ''
     });
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const { signup } = useAuth();
     const router = useRouter();
 
@@ -22,9 +23,14 @@ export default function Signup() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setSuccessMessage('');
         const res = await signup(formData);
         if (res.success) {
-            router.push('/');
+            if (res.pendingApproval) {
+                setSuccessMessage(res.message);
+            } else {
+                router.push('/');
+            }
         } else {
             setError(res.message);
         }
@@ -44,6 +50,15 @@ export default function Signup() {
                 {error && (
                     <div className="bg-red-50 border-l-4 border-red-400 p-4 text-red-700 text-sm">
                         {error}
+                    </div>
+                )}
+                {successMessage && (
+                    <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 text-emerald-800 text-sm rounded">
+                        <p className="font-bold text-base mb-1">Registration Successful!</p>
+                        <p className="mb-3">{successMessage}</p>
+                        <Link href="/auth/login" className="font-bold text-emerald-700 underline hover:text-emerald-900">
+                            Go to Sign In →
+                        </Link>
                     </div>
                 )}
                 <form className="mt-8 space-y-4" onSubmit={handleSubmit}>

@@ -3,6 +3,20 @@ import axios from 'axios';
 import AdminLayout from '../components/AdminLayout';
 import { useAuth } from '../context/AuthContext';
 import Link from 'next/link';
+import {
+    Eye,
+    Trash2,
+    ArrowLeft,
+    Calendar,
+    Bell,
+    Clock,
+    User,
+    CheckCircle2,
+    XCircle,
+    AlertTriangle,
+    Sliders
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000/api';
 
@@ -28,6 +42,24 @@ export default function RecentActivities() {
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
 
+    // Modal state
+    const [selectedActivity, setSelectedActivity] = useState(null);
+    const [deleteModalId, setDeleteModalId] = useState(null);
+
+    // Track locally hidden/deleted activities
+    const [hiddenIds, setHiddenIds] = useState([]);
+
+    useEffect(() => {
+        const stored = localStorage.getItem(`deleted_activities_${user?._id || 'guest'}`);
+        if (stored) {
+            try {
+                setHiddenIds(JSON.parse(stored));
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    }, [user]);
+
     useEffect(() => {
         fetchActivities();
     }, [page]);
@@ -36,7 +68,7 @@ export default function RecentActivities() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`${API_BASE}/admin/recent-activities?page=${page}&limit=5`, {
+            const res = await axios.get(`${API_BASE}/admin/recent-activities?page=${page}&limit=10`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setActivities(res.data.activities);
@@ -48,47 +80,100 @@ export default function RecentActivities() {
         }
     };
 
+    const handleDeleteClick = (id) => {
+        setDeleteModalId(id);
+    };
+
+    const confirmDelete = () => {
+        if (deleteModalId === null) return;
+
+        const updated = [...hiddenIds, deleteModalId];
+        setHiddenIds(updated);
+        localStorage.setItem(`deleted_activities_${user?._id || 'guest'}`, JSON.stringify(updated));
+
+        toast.success('Activity log removed');
+        setDeleteModalId(null);
+    };
+
+    // Filter out locally deleted activities
+    const visibleActivities = activities.filter(act => !hiddenIds.includes(act.id));
+
     return (
         <AdminLayout>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Recent Activity</h1>
-                    <p className="text-secondary dark:text-gray-400 text-sm mt-1">Detailed history of platform events</p>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
+                        Recent Activity Log
+                    </h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        Detailed history of platform events, registrations, and transactions.
+                    </p>
                 </div>
-                <Link href="/" className="btn bg-white dark:bg-slate-800 border border-border dark:border-slate-700 text-slate-900 dark:text-white text-sm px-4 py-2">
-                    ← Back to Dashboard
+                <Link
+                    href="/"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-2xs transition-colors"
+                >
+                    <ArrowLeft className="w-4 h-4" /> Back to Dashboard
                 </Link>
             </div>
 
-            <div className="card p-0 overflow-hidden bg-white dark:bg-slate-800 mb-6">
-                <div className="divide-y divide-border dark:divide-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden mb-6">
+                <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
                     {loading ? (
                         [...Array(5)].map((_, i) => (
                             <div key={i} className="flex gap-4 p-5 animate-pulse">
-                                <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+                                <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 shrink-0"></div>
                                 <div className="flex-1 space-y-3">
                                     <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
                                     <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div>
                                 </div>
                             </div>
                         ))
-                    ) : activities.length === 0 ? (
-                        <div className="p-10 text-center">
-                            <p className="text-secondary dark:text-gray-400">No activity recorded yet.</p>
+                    ) : visibleActivities.length === 0 ? (
+                        <div className="p-16 text-center">
+                            <Sliders className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                            <p className="text-slate-500 dark:text-slate-400 font-semibold">No activity recorded yet.</p>
                         </div>
                     ) : (
-                        activities.map((activity, i) => (
-                            <div key={i} className="flex items-start gap-4 p-5 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                <div className="text-2xl bg-slate-100 dark:bg-slate-700 w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                                    {activity.icon}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-slate-900 dark:text-white font-medium mb-1">{activity.text}</p>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-secondary dark:text-gray-400">{timeAgo(activity.time)}</span>
-                                        <span className="w-1 h-1 rounded-full bg-border dark:bg-slate-600"></span>
-                                        <span className="text-[10px] uppercase font-bold tracking-wider text-accent opacity-80">{activity.type?.replace('_', ' ')}</span>
+                        visibleActivities.map((activity, i) => (
+                            <div
+                                key={activity.id || i}
+                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 hover:bg-slate-50/50 dark:hover:bg-slate-700/25 transition-colors"
+                            >
+                                <div className="flex items-start gap-4 min-w-0">
+                                    <div className="text-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border border-indigo-100/50 dark:border-indigo-900/30">
+                                        {activity.icon || '🔔'}
                                     </div>
+                                    <div className="min-w-0">
+                                        <p className="text-slate-900 dark:text-white font-semibold text-sm leading-snug">
+                                            {activity.text}
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-1.5">
+                                            <span className="inline-flex items-center gap-1 text-xs text-slate-400">
+                                                <Clock className="w-3 h-3" />
+                                                {timeAgo(activity.time)}
+                                            </span>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                                            <span className="text-[10px] uppercase font-extrabold tracking-wider text-indigo-600 dark:text-indigo-400">
+                                                {activity.type?.replace('_', ' ')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                    <button
+                                        onClick={() => setSelectedActivity(activity)}
+                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer"
+                                    >
+                                        <Eye className="w-3.5 h-3.5" /> View Details
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteClick(activity.id || i)}
+                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all cursor-pointer"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                                    </button>
                                 </div>
                             </div>
                         ))
@@ -102,7 +187,7 @@ export default function RecentActivities() {
                     <button
                         onClick={() => setPage(p => Math.max(1, p - 1))}
                         disabled={page === 1 || loading}
-                        className="btn bg-white dark:bg-slate-800 border border-border dark:border-slate-700 px-4 py-2 text-sm disabled:opacity-50"
+                        className="px-4 py-2 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                     >
                         Previous
                     </button>
@@ -112,9 +197,9 @@ export default function RecentActivities() {
                             <button
                                 key={i + 1}
                                 onClick={() => setPage(i + 1)}
-                                className={`w-10 h-10 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${page === i + 1
-                                        ? 'bg-accent text-white'
-                                        : 'bg-white dark:bg-slate-800 border border-border dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors ${page === i + 1
+                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-none'
+                                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
                                     }`}
                             >
                                 {i + 1}
@@ -125,10 +210,86 @@ export default function RecentActivities() {
                     <button
                         onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
                         disabled={page === pagination.totalPages || loading}
-                        className="btn bg-white dark:bg-slate-800 border border-border dark:border-slate-700 px-4 py-2 text-sm disabled:opacity-50"
+                        className="px-4 py-2 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                     >
                         Next
                     </button>
+                </div>
+            )}
+
+            {/* View Details Modal */}
+            {selectedActivity && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[100] transition-opacity">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="text-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 w-12 h-12 rounded-xl flex items-center justify-center border border-indigo-100/50 dark:border-indigo-900/30">
+                                {selectedActivity.icon || '🔔'}
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Activity Detail</h3>
+                                <p className="text-xs text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider mt-0.5">
+                                    {selectedActivity.type?.replace('_', ' ')}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 py-2">
+                            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-sm font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
+                                {selectedActivity.text}
+                            </div>
+
+                            <div className="flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
+                                <span>Timestamp:</span>
+                                <span className="font-semibold">{new Date(selectedActivity.time).toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
+                            {selectedActivity.route && (
+                                <Link
+                                    href={selectedActivity.route}
+                                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors"
+                                >
+                                    Go to Section
+                                </Link>
+                            )}
+                            <button
+                                onClick={() => setSelectedActivity(null)}
+                                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteModalId !== null && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[100]">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 max-w-sm w-full p-6 shadow-2xl text-center">
+                        <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-4 border border-rose-100 dark:border-rose-900/30">
+                            <AlertTriangle className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Delete Activity Log?</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+                            Are you sure you want to remove this event from your recent activity view? This action cannot be undone.
+                        </p>
+                        <div className="flex items-center justify-center gap-3">
+                            <button
+                                onClick={() => setDeleteModalId(null)}
+                                className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors"
+                            >
+                                Yes, Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </AdminLayout>

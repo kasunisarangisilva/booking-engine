@@ -70,7 +70,7 @@ export default function ViewListing() {
                         </div>
                         <div>
                             <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Service Category</h3>
-                            <p className="text-xl font-bold text-slate-900 dark:text-white capitalize px-3 py-1 bg-blue-50 text-blue-600 rounded inline-block">
+                            <p className="text-xl font-bold text-slate-900 dark:text-white capitalize px-3 py-1 text-blue-600 rounded inline-block">
                                 {listing.type}
                             </p>
                         </div>
@@ -84,7 +84,7 @@ export default function ViewListing() {
                     <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
                         <h3 className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-6 underline underline-offset-8">Category Details</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            
+
                             {listing.details?.roomType && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Room Type</h4>

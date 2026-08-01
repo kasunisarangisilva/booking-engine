@@ -137,6 +137,78 @@ class BookingService {
         await this.bookingRepo.delete(id);
         return true;
     }
+
+    async getCustomers(userRole, userId) {
+        let query = {};
+        if (userRole === 'vendor') {
+            const vendorListings = await Listing.find({ vendorId: userId }).select('_id');
+            const listingIds = vendorListings.map(l => l._id);
+            query = { listingId: { $in: listingIds } };
+        }
+
+        const BookingModel = require('../database/models/Booking');
+        const bookings = await BookingModel.find(query)
+            .populate('userId', 'name email phone createdAt')
+            .populate('listingId', 'title type')
+            .sort({ createdAt: -1 });
+
+        const isSyntheticEmail = (email) => {
+            if (!email) return true;
+            return email.endsWith('@guest.internal') ||
+                email.startsWith('widget_') ||
+                email.startsWith('guest_') ||
+                /^guest_\d+@example\.com$/.test(email);
+        };
+
+        const customersMap = {};
+
+        bookings.forEach(b => {
+            const u = b.userId;
+
+            // Extract contact details typed into the widget form or profile
+            const formEmail = b.details?.customerEmail;
+            const formName = b.details?.customerName;
+            const formPhone = b.details?.customerPhone;
+
+            const rawEmail = formEmail || u?.email || '';
+            const cleanEmail = (rawEmail && !isSyntheticEmail(rawEmail)) ? rawEmail : (formEmail || 'N/A');
+
+            const rawName = formName || u?.name || 'Guest Customer';
+            const cleanName = (rawName && !rawName.startsWith('Guest_')) ? rawName : 'Guest Customer';
+
+            const cleanPhone = formPhone || b.phone || u?.phone || 'N/A';
+
+            const key = (cleanEmail && cleanEmail !== 'N/A' && !isSyntheticEmail(cleanEmail))
+                ? cleanEmail.toLowerCase()
+                : (u?._id?.toString() || cleanPhone || 'guest');
+
+            if (!customersMap[key]) {
+                customersMap[key] = {
+                    id: u?._id || key,
+                    name: cleanName,
+                    email: cleanEmail,
+                    phone: cleanPhone,
+                    totalBookings: 0,
+                    totalSpent: 0,
+                    lastBookingDate: b.createdAt,
+                    listingsBooked: new Set()
+                };
+            }
+
+            customersMap[key].totalBookings += 1;
+            if (b.status === 'confirmed') {
+                customersMap[key].totalSpent += (b.totalPrice || 0);
+            }
+            if (b.listingId?.title) {
+                customersMap[key].listingsBooked.add(b.listingId.title);
+            }
+        });
+
+        return Object.values(customersMap).map(c => ({
+            ...c,
+            listingsBooked: Array.from(c.listingsBooked)
+        }));
+    }
 }
 
 module.exports = BookingService;

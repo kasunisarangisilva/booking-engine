@@ -1,15 +1,13 @@
 import { useTheme } from './ThemeContext';
 
-const FIELDS = [
-    { key: 'name', label: 'Full Name', type: 'text', placeholder: 'e.g. John Doe', icon: '👤' },
-    { key: 'email', label: 'Email Address', type: 'email', placeholder: 'e.g. john@example.com', icon: '✉️' },
-    { key: 'phone', label: 'Phone Number', type: 'tel', placeholder: 'e.g. +94771234567', icon: '📱' },
-];
+const labelStyle = {
+    display: 'block', fontSize: 11, fontWeight: 800,
+    letterSpacing: '0.12em', textTransform: 'uppercase',
+    color: 'var(--w-text-muted)', marginBottom: 8,
+};
 
 export default function StepDetails({ formData, updateFormData }) {
     const { isDark } = useTheme();
-
-    const handleChange = (key, val) => updateFormData({ [key]: val });
 
     return (
         <div style={{
@@ -39,7 +37,7 @@ export default function StepDetails({ formData, updateFormData }) {
                     lineHeight: 1.7,
                     maxWidth: 360,
                 }}>
-                    We'll use your information to confirm your booking and send you updates.
+                    Tell us about yourself and where you&apos;re booking from. We&apos;ll use this to confirm your booking.
                 </p>
 
                 {/* Feature callouts */}
@@ -67,15 +65,12 @@ export default function StepDetails({ formData, updateFormData }) {
                 </div>
             </div>
 
-            <div className="w-glass-card" style={{ padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: 24, width: '100%', maxWidth: 480, margin: '0 auto', textAlign: 'left' }}>
+            {/* Right — form card */}
+            <div className="w-glass-card" style={{ padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: 22, width: '100%', maxWidth: 480, margin: '0 auto', textAlign: 'left' }}>
+
+                {/* Full Name */}
                 <div>
-                    <label style={{
-                        display: 'block', fontSize: 11, fontWeight: 800,
-                        letterSpacing: '0.12em', textTransform: 'uppercase',
-                        color: 'var(--w-text-muted)', marginBottom: 8,
-                    }}>
-                        Full Name
-                    </label>
+                    <label style={labelStyle}>Full Name *</label>
                     <input
                         type="text"
                         placeholder="e.g. John Doe"
@@ -86,14 +81,9 @@ export default function StepDetails({ formData, updateFormData }) {
                     />
                 </div>
 
+                {/* Email */}
                 <div>
-                    <label style={{
-                        display: 'block', fontSize: 11, fontWeight: 800,
-                        letterSpacing: '0.12em', textTransform: 'uppercase',
-                        color: 'var(--w-text-muted)', marginBottom: 8,
-                    }}>
-                        Email Address
-                    </label>
+                    <label style={labelStyle}>Email Address *</label>
                     <input
                         type="email"
                         placeholder="e.g. john@example.com"
@@ -104,14 +94,9 @@ export default function StepDetails({ formData, updateFormData }) {
                     />
                 </div>
 
+                {/* Phone */}
                 <div>
-                    <label style={{
-                        display: 'block', fontSize: 11, fontWeight: 800,
-                        letterSpacing: '0.12em', textTransform: 'uppercase',
-                        color: 'var(--w-text-muted)', marginBottom: 8,
-                    }}>
-                        Phone Number
-                    </label>
+                    <label style={labelStyle}>Phone Number *</label>
                     <input
                         type="tel"
                         placeholder="e.g. +94771234567"
@@ -122,65 +107,42 @@ export default function StepDetails({ formData, updateFormData }) {
                     />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-
-                    <div className="space-y-3">
-                        <label className="text-xs md:text-sm font-black text-slate-400 uppercase tracking-widest px-1">Property Standard</label>
-                        <select
-                            className="w-input"
-                            value={formData.propertyType}
-                            onChange={e => updateFormData({ propertyType: e.target.value })}
-                            style={{ cursor: 'pointer', appearance: 'none', background: 'var(--w-input-bg)' }}
-                        >
-                            <option value="">Any</option>
-                            <option value="luxury">💎 Luxury</option>
-                            <option value="budget">💰 Budget</option>
-                            <option value="boutique">✨ Boutique</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label style={{
-                            display: 'block', fontSize: 11, fontWeight: 800,
-                            letterSpacing: '0.12em', textTransform: 'uppercase',
-                            color: 'var(--w-text-muted)', marginBottom: 8,
-                        }}>
-                            Quantity
-                        </label>
-                        <input
-                            className="w-input"
-                            type="number"
-                            min="1"
-                            placeholder="1"
-                            value={formData.rooms || ''}
-                            onChange={e => updateFormData({ rooms: e.target.value })}
-                        />
-                    </div>
-                </div>
-
+                {/* Location */}
                 <div>
-                    <label style={{
-                        display: 'block', fontSize: 11, fontWeight: 800,
-                        letterSpacing: '0.12em', textTransform: 'uppercase',
-                        color: 'var(--w-text-muted)', marginBottom: 8,
-                    }}>
-                        Country
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                        <span style={{
-                            position: 'absolute', left: 16, top: '50%',
-                            transform: 'translateY(-50%)', fontSize: 16,
-                        }}>🌍</span>
-                        <input
-                            className="w-input"
-                            type="text"
-                            placeholder="e.g. Sri Lanka"
-                            value={formData.country || ''}
-                            onChange={e => updateFormData({ country: e.target.value })}
-                            style={{ paddingLeft: 48 }}
-                        />
-                    </div>
+                    <label style={labelStyle}>📍 Your Location</label>
+                    <input
+                        type="text"
+                        placeholder="e.g. Colombo, Sri Lanka"
+                        className="w-input"
+                        value={formData.location || ''}
+                        onChange={(e) => updateFormData({ location: e.target.value })}
+                    />
+                    <p style={{ marginTop: 6, fontSize: 11, color: 'var(--w-text-muted)', fontWeight: 500 }}>
+                        City or country you&apos;re travelling from
+                    </p>
                 </div>
+
+                {/* Special Requirements */}
+                <div>
+                    <label style={labelStyle}>✨ Special Requirements</label>
+                    <textarea
+                        placeholder="e.g. Early check-in, vegetarian meal, wheelchair access..."
+                        className="w-input"
+                        rows={3}
+                        value={formData.specialRequirements || ''}
+                        onChange={(e) => updateFormData({ specialRequirements: e.target.value })}
+                        style={{
+                            resize: 'vertical',
+                            minHeight: 80,
+                            lineHeight: 1.6,
+                            fontFamily: 'inherit',
+                        }}
+                    />
+                    <p style={{ marginTop: 6, fontSize: 11, color: 'var(--w-text-muted)', fontWeight: 500 }}>
+                        Optional — any preferences or needs for your booking
+                    </p>
+                </div>
+
             </div>
         </div>
     );

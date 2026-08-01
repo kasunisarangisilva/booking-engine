@@ -5,6 +5,7 @@ const AdminService = require("../../services/AdminService");
 const adminService = new AdminService();
 const Notification = require("../../database/models/Notification");
 const PDFDocument = require("pdfkit");
+const PlatformSettings = require("../../database/models/PlatformSettings");
 
 const AdminController = {
   async getAllVendorsV2(req, res, next) {
@@ -75,7 +76,7 @@ const AdminController = {
       await vendor.save();
 
       const notif = new Notification({
-        recipient: vendor._id,
+        recipient: vendor._id.toString(),
         type: 'vendor_approved',
         message: 'Your vendor account has been approved by an admin.'
       });
@@ -111,7 +112,7 @@ const AdminController = {
       await vendor.save();
 
       const notif = new Notification({
-        recipient: vendor._id,
+        recipient: vendor._id.toString(),
         type: 'vendor_suspended',
         message: 'Your vendor account has been suspended by an admin.'
       });
@@ -138,7 +139,7 @@ const AdminController = {
       await vendor.save();
 
       const notif = new Notification({
-        recipient: vendor._id,
+        recipient: vendor._id.toString(),
         type: 'vendor_activated',
         message: 'Your vendor account has been activated by an admin.'
       });
@@ -165,7 +166,7 @@ const AdminController = {
       await vendor.save();
 
       const notif = new Notification({
-        recipient: vendor._id,
+        recipient: vendor._id.toString(),
         type: 'vendor_inactive',
         message: 'Your vendor account has been marked as inactive.'
       });
@@ -381,31 +382,22 @@ const AdminController = {
       if (user.role === "admin") {
         const counts = await Promise.all([
           User.countDocuments({ role: "vendor" }),
-          Booking.countDocuments(),
           Listing.countDocuments(),
         ]);
         totalActivities = counts.reduce((a, b) => a + b, 0);
 
-        const [recentVendors, recentBookings, recentListings] = await Promise.all([
+        const [recentVendors, recentListings] = await Promise.all([
           User.find({ role: "vendor" }).sort({ createdAt: -1 }).limit(fetchSize).select("name createdAt"),
-          Booking.find().sort({ createdAt: -1 }).limit(fetchSize).populate("userId", "name").populate("listingId", "title"),
           Listing.find().sort({ createdAt: -1 }).limit(fetchSize).populate("vendorId", "name"),
         ]);
 
         recentVendors.forEach((v) => {
-          activities.push({ text: `New vendor "${v.name}" registered`, time: v.createdAt, icon: "👤", type: "vendor_registration" });
-        });
-
-        recentBookings.forEach((b) => {
-          const customerName = b.userId?.name || "Unknown";
-          const listingTitle = b.listingId?.title || "Unknown";
-          const statusText = b.status === "confirmed" ? "completed" : b.status;
-          activities.push({ text: `Booking for "${listingTitle}" ${statusText} by ${customerName}`, time: b.createdAt, icon: b.status === "confirmed" ? "✅" : b.status === "cancelled" ? "❌" : "📅", type: "booking" });
+          activities.push({ id: `vendor-${v._id}`, text: `New vendor "${v.name}" registered`, time: v.createdAt, icon: "👤", type: "vendor_registration", route: "/vendors" });
         });
 
         recentListings.forEach((l) => {
           const vendorName = l.vendorId?.name || "Unknown";
-          activities.push({ text: `New listing "${l.title}" created by ${vendorName}`, time: l.createdAt, icon: "🔔", type: "new_listing" });
+          activities.push({ id: `listing-${l._id}`, text: `New listing "${l.title}" created by ${vendorName}`, time: l.createdAt, icon: "🔔", type: "new_listing", route: "/listings" });
         });
       } else if (user.role === "vendor") {
         const allMyListings = await Listing.find({ vendorId: user._id }).select("_id");
@@ -426,11 +418,11 @@ const AdminController = {
           const customerName = b.userId?.name || "Unknown";
           const listingTitle = b.listingId?.title || "Unknown";
           const statusText = b.status === "confirmed" ? "completed" : b.status;
-          activities.push({ text: `Booking for "${listingTitle}" ${statusText} by ${customerName}`, time: b.createdAt, icon: b.status === "confirmed" ? "✅" : b.status === "cancelled" ? "❌" : "📅", type: "booking" });
+          activities.push({ id: `booking-${b._id}`, text: `Booking for "${listingTitle}" ${statusText} by ${customerName}`, time: b.createdAt, icon: b.status === "confirmed" ? "✅" : b.status === "cancelled" ? "❌" : "📅", type: "booking", route: "/bookings" });
         });
 
         myListings.forEach((l) => {
-          activities.push({ text: `Your listing "${l.title}" was created`, time: l.createdAt, icon: "🔔", type: "new_listing" });
+          activities.push({ id: `listing-${l._id}`, text: `Your listing "${l.title}" was created`, time: l.createdAt, icon: "🔔", type: "new_listing", route: "/listings" });
         });
       }
 
@@ -445,6 +437,56 @@ const AdminController = {
     } catch (error) {
       console.error("Get recent activities error:", error);
       res.status(500).json({ message: "Server error" });
+    }
+  },
+
+  // Platform Settings
+  async getSettings(req, res) {
+    try {
+      let settings = await PlatformSettings.findById('platform_settings');
+      if (!settings) {
+        // Create default settings if none exist
+        settings = await PlatformSettings.create({ _id: 'platform_settings' });
+      }
+      res.json({ success: true, settings });
+    } catch (error) {
+      console.error('Get settings error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  },
+
+  async updateSettings(req, res) {
+    try {
+      const {
+        platformName,
+        supportEmail,
+        defaultCurrency,
+        commissionRate,
+        allowNewVendors,
+        requireVendorApproval,
+        maintenanceMode,
+      } = req.body;
+
+      const settings = await PlatformSettings.findByIdAndUpdate(
+        'platform_settings',
+        {
+          $set: {
+            platformName,
+            supportEmail,
+            defaultCurrency,
+            commissionRate,
+            allowNewVendors,
+            requireVendorApproval,
+            maintenanceMode,
+          },
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      );
+
+      res.json({ success: true, settings, message: 'Settings updated successfully' });
+    } catch (error) {
+      console.error('Update settings error:', error);
+      res.status(500).json({ message: 'Server error' });
     }
   }
 };
