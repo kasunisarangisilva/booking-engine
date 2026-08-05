@@ -2,40 +2,54 @@ import { useState } from 'react';
 import { useTheme } from './ThemeContext';
 
 export default function StepPayment({ formData, updateFormData }) {
-    const [selectedMethod, setSelectedMethod] = useState(formData.paymentMethod || 'card');
+    const [selectedMethod, setSelectedMethod] = useState(formData.paymentMethod || 'bank_transfer');
     const { isDark } = useTheme();
 
     const paymentMethods = [
         {
+            id: 'bank_transfer',
+            name: 'Bank Transfer / Pay on Arrival',
+            sub: 'Direct Offline Booking — Ideal for Local Demos & Presentations',
+            icon: '🏦',
+            badge: 'Bank Transfer',
+            disabled: false,
+        },
+        {
             id: 'card',
             name: 'Credit / Debit Card',
-            sub: 'Powered by Stripe — secure 3D auth',
+            sub: 'Powered by Stripe — Online payment',
             icon: '💳',
             badge: 'Most Popular',
         },
         {
             id: 'koko',
             name: 'Koko Pay',
-            sub: 'Split into 3 interest-free payments',
+            sub: 'Split into 3 interest-free payments (Coming Soon)',
             icon: null,
             img: 'https://booking-engine-widget.vercel.app/images/koko-logo.png',
             imgAlt: 'Koko',
             badge: 'Buy Now Pay Later',
+            disabled: true,
         },
         {
             id: 'mintpay',
             name: 'Mint Pay',
-            sub: 'Shop now, pay over time',
+            sub: 'Shop now, pay over time (Coming Soon)',
             icon: null,
             img: 'https://booking-engine-widget.vercel.app/images/mintpay-logo.png',
             imgAlt: 'Mint Pay',
-            badge: null,
+            badge: 'Coming Soon',
+            disabled: true,
         },
     ];
 
-    const handleSelect = (id) => {
-        setSelectedMethod(id);
-        updateFormData({ paymentMethod: id });
+    const handleSelect = (method) => {
+        if (method.disabled) {
+            alert(`${method.name} integration is Coming Soon! Please choose Bank Transfer or Credit Card for local testing.`);
+            return;
+        }
+        setSelectedMethod(method.id);
+        updateFormData({ paymentMethod: method.id });
     };
 
     const price = formData.selectedListing?.price || 0;
@@ -149,9 +163,9 @@ export default function StepPayment({ formData, updateFormData }) {
                         return (
                             <div
                                 key={method.id}
-                                className={`w-option-card ${isSelected ? 'selected' : ''}`}
-                                onClick={() => handleSelect(method.id)}
-                                style={{ position: 'relative' }}
+                                className={`w-option-card ${isSelected ? 'selected' : ''} ${method.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                onClick={() => handleSelect(method)}
+                                style={{ position: 'relative', opacity: method.disabled ? 0.6 : 1 }}
                             >
                                 {method.badge && (
                                     <span style={{

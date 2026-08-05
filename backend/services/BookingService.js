@@ -1,12 +1,13 @@
 const BookingRepository = require('../database/repository/BookingRepository');
 const { Listing } = require('../database/models/Listing');
+const Notification = require('../database/models/Notification');
 
 class BookingService {
     constructor() {
         this.bookingRepo = new BookingRepository();
     }
 
-    async createBooking(bookingData) {
+    async createBooking(bookingData, io) {
         const { userId, listingId, details, totalPrice, paymentMethod, phone } = bookingData;
 
         const listing = await Listing.findById(listingId);
@@ -22,8 +23,41 @@ class BookingService {
             paymentMethod: paymentMethod || 'card', totalPrice, phone
         });
 
-        await newBooking.populate('listingId', 'title type price');
+        await newBooking.populate('listingId', 'title type price vendorId');
         await newBooking.populate('userId', 'name email');
+
+        const customerName = details?.customerName || newBooking.userId?.name || 'Customer';
+        const listingTitle = listing.title || 'Listing';
+
+        // Notify Vendor only for payment methods that require async confirmation (card/stripe).
+        // For bank_transfer / cash, local-confirm fires immediately so we skip new_booking
+        // and let notifyBookingConfirmed send a single booking_confirmed notification.
+        const isImmediatePayment = (paymentMethod === 'bank_transfer' || paymentMethod === 'cash');
+        if (listing.vendorId && !isImmediatePayment) {
+            const vendorIdStr = listing.vendorId.toString();
+            try {
+                const vendorNotif = new Notification({
+                    recipient: vendorIdStr,
+                    type: 'new_booking',
+                    message: `New booking received for "${listingTitle}" by ${customerName}.`,
+                    data: {
+                        bookingId: newBooking._id,
+                        listingId: listing._id,
+                        customerName
+                    }
+                });
+                await vendorNotif.save();
+
+                if (io) {
+                    io.to(`vendor_${vendorIdStr}`).emit('notification', {
+                        ...vendorNotif.toObject(),
+                        data: newBooking
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to create vendor notification:', err);
+            }
+        }
 
         return newBooking;
     }

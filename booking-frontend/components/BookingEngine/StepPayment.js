@@ -1,17 +1,22 @@
 import { useState } from 'react';
 
 export default function StepPayment({ formData, updateFormData }) {
-    const [selectedMethod, setSelectedMethod] = useState(formData.paymentMethod || 'card');
+    const [selectedMethod, setSelectedMethod] = useState(formData.paymentMethod || 'bank_transfer');
 
     const paymentMethods = [
+        { id: 'bank_transfer', name: 'Bank Transfer / Pay on Arrival', icon: '🏦', desc: 'Direct booking for local offline demo' },
         { id: 'card', name: 'Credit / Debit Card', icon: '💳', desc: 'Secure payment via Stripe' },
-        { id: 'paypal', name: 'PayPal', icon: '🅿️', desc: 'Fast and safe electronic payments' },
-        { id: 'crypto', name: 'Cryptocurrency', icon: '₿', desc: 'Pay with BTC, ETH or USDC' }
+        { id: 'koko', name: 'Koko Pay (Coming Soon)', icon: '🛍️', desc: 'Split into 3 interest-free payments', disabled: true },
+        { id: 'mintpay', name: 'Mint Pay (Coming Soon)', icon: '🍃', desc: 'Shop now, pay over time', disabled: true }
     ];
 
-    const handleSelect = (id) => {
-        setSelectedMethod(id);
-        updateFormData({ paymentMethod: id });
+    const handleSelect = (method) => {
+        if (method.disabled) {
+            alert(`${method.name} is Coming Soon! Please choose Bank Transfer or Credit Card.`);
+            return;
+        }
+        setSelectedMethod(method.id);
+        updateFormData({ paymentMethod: method.id });
     };
 
     return (

@@ -7,5 +7,6 @@ router.post('/create-stripe-session', protect, paymentController.createStripeSes
 router.post('/verify-session', protect, paymentController.verifyStripeSession);
 router.post('/koko/initiate', protect, paymentController.createKokoPayment);
 router.post('/mintpay/initiate', protect, paymentController.createMintPayPayment);
+router.post('/local-confirm', protect, paymentController.confirmLocalPayment);
 
 module.exports = router;

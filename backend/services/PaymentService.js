@@ -65,34 +65,50 @@ class PaymentService {
 
             const vendorIdStr = listing.vendorId.toString();
 
-            // Prevent duplicate notifications for the same booking
-            const existingNotif = await Notification.findOne({
+            // Get customer name and phone from booking details or populated user object
+            const bookingWithUser = await Booking.findById(booking._id).populate('userId', 'name email phone');
+            const customerName = booking.details?.customerName || bookingWithUser?.userId?.name || 'Customer';
+            const customerPhone = booking.details?.customerPhone || booking.phone || bookingWithUser?.userId?.phone || booking.details?.customerEmail || '';
+
+            const isBankTransfer = booking.paymentMethod === 'bank_transfer' || booking.paymentMethod === 'cash' || booking.paymentDetails?.paymentMethod === 'bank_transfer';
+
+            const phoneInfo = customerPhone ? ` (${customerPhone})` : '';
+            const notifMessage = isBankTransfer
+                ? `Bank Transfer booking for "${listing.title}" by ${customerName}${phoneInfo}. Please contact customer to collect & verify payment.`
+                : `Booking confirmed for "${listing.title}" by ${customerName}.`;
+
+            // Vendor Notification
+            const existingVendorNotif = await Notification.findOne({
                 recipient: vendorIdStr,
                 'data.bookingId': booking._id
             });
-            if (existingNotif) {
-                return; // Already notified, skip
-            }
 
-            // Get customer name from booking details or populated user object
-            const bookingWithUser = await Booking.findById(booking._id).populate('userId', 'name email');
-            const customerName = booking.details?.customerName || bookingWithUser?.userId?.name || 'Customer';
+            if (existingVendorNotif) {
+                // Update existing notification status & message and re-emit so frontend updates in-place
+                existingVendorNotif.type = 'booking_confirmed';
+                existingVendorNotif.message = notifMessage;
+                await existingVendorNotif.save();
 
-            // Send notification ONLY to the listing's vendor with customer name
-            const vendorNotif = new Notification({
-                recipient: vendorIdStr,
-                type: 'booking_confirmed',
-                message: `New booking confirmed for "${listing.title}" by ${customerName}.`,
-                data: {
-                    bookingId: booking._id,
-                    listingId: listing._id,
-                    customerName: customerName
+                if (io) {
+                    io.to(`vendor_${vendorIdStr}`).emit('notification', { ...existingVendorNotif.toObject(), data: bookingWithUser || booking });
                 }
-            });
-            await vendorNotif.save();
+            } else {
+                const vendorNotif = new Notification({
+                    recipient: vendorIdStr,
+                    type: 'booking_confirmed',
+                    message: notifMessage,
+                    data: {
+                        bookingId: booking._id,
+                        listingId: listing._id,
+                        customerName: customerName,
+                        paymentMethod: booking.paymentMethod
+                    }
+                });
+                await vendorNotif.save();
 
-            if (io) {
-                io.to(`vendor_${vendorIdStr}`).emit('notification', { ...vendorNotif.toObject(), data: bookingWithUser || booking });
+                if (io) {
+                    io.to(`vendor_${vendorIdStr}`).emit('notification', { ...vendorNotif.toObject(), data: bookingWithUser || booking });
+                }
             }
 
             // SMS Notification

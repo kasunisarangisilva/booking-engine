@@ -30,6 +30,7 @@ export default function ViewBookings() {
     const [cancelReason, setCancelReason] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [typeFilter, setTypeFilter] = useState('all');
+    const [paymentFilter, setPaymentFilter] = useState('all');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [deleteModalId, setDeleteModalId] = useState(null);
@@ -105,6 +106,7 @@ export default function ViewBookings() {
                 (b.userId?.email && b.userId.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (b.details?.customerEmail && b.details.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (b.listingId?.title && b.listingId.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (b.paymentMethod && b.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (b.status && b.status.toLowerCase().includes(searchTerm.toLowerCase()));
 
             // Status filter check
@@ -114,6 +116,11 @@ export default function ViewBookings() {
             // Type filter check
             const matchesType = typeFilter === 'all' ||
                 (b.listingId?.type && b.listingId.type.toLowerCase() === typeFilter.toLowerCase());
+
+            // Payment method filter check
+            const matchesPayment = paymentFilter === 'all' ||
+                (b.paymentMethod && b.paymentMethod.toLowerCase() === paymentFilter.toLowerCase()) ||
+                (paymentFilter === 'bank_transfer' && (b.paymentMethod === 'bank_transfer' || b.paymentMethod === 'cash'));
 
             // Date range check
             let matchesDate = true;
@@ -132,7 +139,7 @@ export default function ViewBookings() {
                 }
             }
 
-            return matchesSearch && matchesStatus && matchesType && matchesDate;
+            return matchesSearch && matchesStatus && matchesType && matchesPayment && matchesDate;
         })
         : [];
 
@@ -174,6 +181,42 @@ export default function ViewBookings() {
         }
     };
 
+    const getPaymentBadge = (method) => {
+        switch (method?.toLowerCase()) {
+            case 'bank_transfer':
+            case 'cash':
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-700/60 shadow-2xs">
+                        🏦 Bank Transfer
+                    </span>
+                );
+            case 'card':
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800 shadow-2xs">
+                        💳 Card
+                    </span>
+                );
+            case 'koko':
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800 shadow-2xs">
+                        🛍️ Koko Pay
+                    </span>
+                );
+            case 'mintpay':
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800 shadow-2xs">
+                        🍃 Mint Pay
+                    </span>
+                );
+            default:
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 capitalize">
+                        💳 {method || 'Card'}
+                    </span>
+                );
+        }
+    };
+
     return (
         <AdminLayout>
             <div className="flex flex-col gap-6 mb-8 bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xs">
@@ -199,7 +242,7 @@ export default function ViewBookings() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-4 border-t border-slate-100 dark:border-slate-700/60 items-end">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60 items-end">
                     <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Status</label>
                         <select
@@ -231,6 +274,21 @@ export default function ViewBookings() {
                     </div>
 
                     <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Payment Method</label>
+                        <select
+                            value={paymentFilter}
+                            onChange={(e) => setPaymentFilter(e.target.value)}
+                            className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        >
+                            <option value="all">All Payments</option>
+                            <option value="bank_transfer">🏦 Bank Transfer</option>
+                            <option value="card">💳 Card (Stripe)</option>
+                            <option value="koko">🛍️ Koko Pay</option>
+                            <option value="mintpay">🍃 Mint Pay</option>
+                        </select>
+                    </div>
+
+                    <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">From Date</label>
                         <input
                             type="date"
@@ -256,6 +314,7 @@ export default function ViewBookings() {
                             onClick={() => {
                                 setStatusFilter('all');
                                 setTypeFilter('all');
+                                setPaymentFilter('all');
                                 setStartDate('');
                                 setEndDate('');
                                 setSearchTerm('');
@@ -275,6 +334,7 @@ export default function ViewBookings() {
                             <tr className="border-b border-slate-200 dark:border-slate-700 text-left bg-slate-50/50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
                                 <th className="p-4 pl-6">Guest Details</th>
                                 <th className="p-4">Listing</th>
+                                <th className="p-4">Payment Method</th>
                                 <th className="p-4">Total Price</th>
                                 <th className="p-4">Status</th>
                                 <th className="p-4">Date Created</th>
@@ -290,6 +350,7 @@ export default function ViewBookings() {
                                             <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-24"></div>
                                         </td>
                                         <td className="p-4"><div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-32"></div></td>
+                                        <td className="p-4"><div className="h-6 bg-slate-200 dark:bg-slate-700 rounded-full w-24"></div></td>
                                         <td className="p-4"><div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16"></div></td>
                                         <td className="p-4"><div className="h-6 bg-slate-200 dark:bg-slate-700 rounded-full w-20"></div></td>
                                         <td className="p-4"><div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24"></div></td>
@@ -326,6 +387,9 @@ export default function ViewBookings() {
                                             <div className="text-xs text-slate-400 capitalize">
                                                 {b.listingId?.type || 'Service'}
                                             </div>
+                                        </td>
+                                        <td className="p-4">
+                                            {getPaymentBadge(b.paymentMethod)}
                                         </td>
                                         <td className="p-4 text-sm font-bold text-slate-900 dark:text-white">
                                             ${b.totalPrice}

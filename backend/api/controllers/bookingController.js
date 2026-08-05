@@ -1,10 +1,13 @@
 const BookingService = require('../../services/BookingService');
 const bookingService = new BookingService();
+const invoiceService = require('../../services/InvoiceService');
+const emailService = require('../../services/EmailService');
+const Booking = require('../../database/models/Booking');
 
 const BookingController = {
     async createBooking(req, res) {
         try {
-            const newBooking = await bookingService.createBooking(req.body);
+            const newBooking = await bookingService.createBooking(req.body, req.io);
             res.status(201).json(newBooking);
         } catch (error) {
             console.error('Create booking error:', error.message);
@@ -104,6 +107,56 @@ const BookingController = {
         } catch (error) {
             console.error('Get customers error:', error);
             res.status(500).json({ message: 'Server error' });
+        }
+    },
+
+    async downloadInvoice(req, res) {
+        try {
+            const booking = await Booking.findById(req.params.id)
+                .populate('userId', 'name email phone')
+                .populate('listingId', 'title type description price');
+            if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+            const invNo = booking._id.toString().slice(-8).toUpperCase();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=invoice-${invNo}.pdf`);
+
+            await invoiceService.generateInvoice(booking, res);
+        } catch (error) {
+            console.error('Invoice download error:', error);
+            res.status(500).json({ message: error.message });
+        }
+    },
+
+    async emailInvoice(req, res) {
+        try {
+            const { toEmail } = req.body;
+
+            const booking = await Booking.findById(req.params.id)
+                .populate('userId', 'name email phone')
+                .populate('listingId', 'title type description price');
+            if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+            const recipient = toEmail ||
+                booking.details?.customerEmail ||
+                booking.userId?.email;
+
+            if (!recipient) return res.status(400).json({ message: 'No recipient email found for this booking' });
+
+            const result = await emailService.sendInvoiceEmail(booking, recipient);
+
+            res.status(200).json({
+                success: true,
+                message: result.offline
+                    ? `Invoice saved locally (offline mode). Check backend/email-previews/ folder.`
+                    : `Invoice sent to ${recipient}`,
+                previewUrl: result.previewUrl || null,
+                offline: result.offline || false,
+                localHtmlPath: result.localHtmlPath || null,
+            });
+        } catch (error) {
+            console.error('Email invoice error:', error);
+            res.status(500).json({ message: error.message });
         }
     }
 };

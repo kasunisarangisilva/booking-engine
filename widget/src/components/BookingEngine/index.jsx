@@ -178,12 +178,19 @@ function BookingEngineInner() {
                 const bookingId = bookingRes.data._id;
 
                 let paymentRes;
-                if (formData.paymentMethod === 'koko') {
+                if (formData.paymentMethod === 'bank_transfer' || formData.paymentMethod === 'cash') {
+                    paymentRes = await axios.post(`${API_BASE}/payments/local-confirm`, { bookingId, paymentMethod: formData.paymentMethod }, { headers: { 'Authorization': `Bearer ${token}` } });
+                } else if (formData.paymentMethod === 'koko') {
                     paymentRes = await axios.post(`${API_BASE}/payments/koko/initiate`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
                 } else if (formData.paymentMethod === 'mintpay') {
                     paymentRes = await axios.post(`${API_BASE}/payments/mintpay/initiate`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
                 } else {
-                    paymentRes = await axios.post(`${API_BASE}/payments/create-stripe-session`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                    try {
+                        paymentRes = await axios.post(`${API_BASE}/payments/create-stripe-session`, { bookingId }, { headers: { 'Authorization': `Bearer ${token}` } });
+                    } catch (stripeErr) {
+                        console.warn('[Widget] Stripe offline fallback to local-confirm:', stripeErr.message);
+                        paymentRes = await axios.post(`${API_BASE}/payments/local-confirm`, { bookingId, paymentMethod: 'card' }, { headers: { 'Authorization': `Bearer ${token}` } });
+                    }
                 }
 
                 if (paymentRes.data.url || paymentRes.data.redirectUrl) {
@@ -466,9 +473,27 @@ function ConfirmationStep({ formData, onRestart }) {
                 Booking Confirmed!
             </h1>
 
-            <p style={{ fontSize: 18, color: 'var(--w-text-muted)', fontWeight: 500, lineHeight: 1.6, marginBottom: 40 }}>
-                Your booking at <strong style={{ color: 'var(--w-accent)' }}>{formData.selectedListing?.title}</strong> has been successfully processed. A confirmation email will be sent shortly.
+            <p style={{ fontSize: 18, color: 'var(--w-text-muted)', fontWeight: 500, lineHeight: 1.6, marginBottom: 24 }}>
+                Your booking at <strong style={{ color: 'var(--w-accent)' }}>{formData.selectedListing?.title}</strong> has been successfully processed.
             </p>
+
+            {(formData.paymentMethod === 'bank_transfer' || formData.paymentMethod === 'cash') && (
+                <div style={{
+                    padding: '16px 20px',
+                    borderRadius: 16,
+                    background: 'color-mix(in srgb, #eab308 12%, transparent)',
+                    border: '1px solid #eab308',
+                    color: 'var(--w-text)',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    textAlign: 'left',
+                    marginBottom: 32,
+                    lineHeight: 1.6
+                }}>
+                    🏦 <strong>Bank Transfer / Pay on Arrival Notice:</strong><br />
+                    Your booking request has been sent to the vendor. The vendor will contact you at <strong>{formData.phone || formData.email}</strong> to verify payment details or collect funds.
+                </div>
+            )}
 
             {/* Summary card */}
             <div className="w-glass-card" style={{ padding: '24px 32px', marginBottom: 32, textAlign: 'left' }}>

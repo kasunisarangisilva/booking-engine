@@ -9,6 +9,8 @@ router.get('/user/:userId', protect, bookingController.getUserBookings);
 router.get('/all', protect, authorize('admin'), bookingController.getAllBookings);
 router.get('/customers', protect, authorize('vendor'), bookingController.getCustomers);
 router.get('/:id', protect, bookingController.getBookingById);
+router.get('/:id/invoice', protect, bookingController.downloadInvoice);
+router.post('/:id/email-invoice', protect, bookingController.emailInvoice);
 router.put('/:id', protect, bookingController.updateBooking);
 router.put('/:id/cancel', protect, bookingController.cancelBooking);
 router.delete('/:id', protect, bookingController.deleteBooking);
