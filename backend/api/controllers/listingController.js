@@ -8,6 +8,9 @@ const ListingController = {
             res.status(201).json(newListing);
         } catch (error) {
             console.error('Create listing error:', error);
+            if (error.name === 'ValidationError') {
+                return res.status(400).json({ message: error.message, error: error.message });
+            }
             res.status(500).json({ message: 'Server error', error: error.message });
         }
     },
@@ -89,6 +92,9 @@ const ListingController = {
             res.status(200).json(updatedListing);
         } catch (error) {
             console.error('Update listing error:', error.message);
+            if (error.name === 'ValidationError') {
+                return res.status(400).json({ message: error.message });
+            }
             res.status(error.message.includes('Not authorized') ? 403 : 500).json({ message: error.message });
         }
     },

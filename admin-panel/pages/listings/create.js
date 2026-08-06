@@ -66,12 +66,71 @@ export default function CreateListing() {
         }
     };
 
+    const [errors, setErrors] = useState({});
+
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        // Clear field error on change
+        if (errors[name]) {
+            setErrors({ ...errors, [name]: null });
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        if (!formData.title.trim()) {
+            newErrors.title = 'Title is required';
+        } else if (formData.title.trim().length < 3) {
+            newErrors.title = 'Title must be at least 3 characters';
+        } else if (formData.title.length > 100) {
+            newErrors.title = 'Title cannot exceed 100 characters';
+        }
+
+        if (!formData.description.trim()) {
+            newErrors.description = 'Description is required';
+        } else if (formData.description.trim().length < 10) {
+            newErrors.description = 'Description must be at least 10 characters';
+        } else if (formData.description.length > 1000) {
+            newErrors.description = 'Description cannot exceed 1000 characters';
+        }
+
+        const priceNum = Number(formData.price);
+        if (formData.price === '' || isNaN(priceNum) || priceNum <= 0) {
+            newErrors.price = 'Price must be greater than $0';
+        } else if (priceNum > 1000000) {
+            newErrors.price = 'Price cannot exceed $1,000,000';
+        }
+
+        if (!formData.location.trim()) {
+            newErrors.location = 'Location is required';
+        } else if (formData.location.trim().length < 2) {
+            newErrors.location = 'Location must be at least 2 characters';
+        } else if (formData.location.length > 150) {
+            newErrors.location = 'Location cannot exceed 150 characters';
+        }
+
+        if (formData.type === 'cinema') {
+            if (!formData.movieTitle.trim()) {
+                newErrors.movieTitle = 'Movie title is required';
+            } else if (formData.movieTitle.length > 100) {
+                newErrors.movieTitle = 'Movie title cannot exceed 100 characters';
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!validateForm()) {
+            toast.error('Please fix validation errors before submitting.');
+            return;
+        }
+
         const currentUserId = user?._id || user?.id;
 
         if (!currentUserId) {
@@ -94,10 +153,13 @@ export default function CreateListing() {
 
         const payload = {
             ...formData,
+            title: formData.title.trim(),
+            description: formData.description.trim(),
+            location: formData.location.trim(),
             vendorId: selectedVendorId,
             price: Number(formData.price),
-            amenities: formData.amenities ? formData.amenities.split(',').map(s => s.trim()) : [],
-            features: formData.features ? formData.features.split(',').map(s => s.trim()) : [],
+            amenities: formData.amenities ? formData.amenities.split(',').map(s => s.trim()).filter(Boolean) : [],
+            features: formData.features ? formData.features.split(',').map(s => s.trim()).filter(Boolean) : [],
             capacity: Number(formData.capacity),
             area: Number(formData.area),
             seatLayout: {
@@ -171,17 +233,25 @@ export default function CreateListing() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                                    Service Title *
-                                </label>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                        Service Title *
+                                    </label>
+                                    <span className={`text-xs font-mono font-medium ${formData.title.length >= 90 ? 'text-amber-500 font-bold' : 'text-slate-400'}`}>
+                                        {formData.title.length}/100
+                                    </span>
+                                </div>
                                 <input
                                     type="text"
                                     name="title"
-                                    className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                    maxLength={100}
+                                    className={`w-full p-3.5 rounded-xl border ${errors.title ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-500'} bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 transition-all`}
                                     onChange={handleChange}
+                                    value={formData.title}
                                     required
                                     placeholder="e.g. Grand Luxury Suite"
                                 />
+                                {errors.title && <p className="mt-1 text-xs text-red-500 font-medium">{errors.title}</p>}
                             </div>
 
                             <div>
@@ -204,17 +274,25 @@ export default function CreateListing() {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                                Description *
-                            </label>
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                    Description *
+                                </label>
+                                <span className={`text-xs font-mono font-medium ${formData.description.length >= 900 ? 'text-amber-500 font-bold' : 'text-slate-400'}`}>
+                                    {formData.description.length}/1000
+                                </span>
+                            </div>
                             <textarea
                                 name="description"
                                 rows="4"
-                                className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                maxLength={1000}
+                                className={`w-full p-3.5 rounded-xl border ${errors.description ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-500'} bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium text-sm focus:outline-none focus:ring-2 transition-all`}
                                 onChange={handleChange}
+                                value={formData.description}
                                 required
                                 placeholder="Describe your service, features, rules, and amenities in detail..."
                             ></textarea>
+                            {errors.description && <p className="mt-1 text-xs text-red-500 font-medium">{errors.description}</p>}
                         </div>
 
                         {/* Category Specific Details */}
@@ -227,7 +305,7 @@ export default function CreateListing() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 mb-1">Room Type</label>
-                                        <select name="roomType" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold">
+                                        <select name="roomType" value={formData.roomType} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold">
                                             {formData.type === 'hotel' ? (
                                                 <>
                                                     <option value="single">Single Room</option>
@@ -244,12 +322,15 @@ export default function CreateListing() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Total Rooms</label>
-                                        <input type="number" name="totalRooms" min="1" value={formData.totalRooms} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Total Rooms (Max 1000)</label>
+                                        <input type="number" name="totalRooms" min="1" max="1000" value={formData.totalRooms} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Amenities</label>
-                                        <input type="text" name="amenities" onChange={handleChange} placeholder="WiFi, Pool, Spa" className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="block text-xs font-semibold text-slate-500">Amenities</label>
+                                            <span className="text-[10px] font-mono text-slate-400">{formData.amenities.length}/250</span>
+                                        </div>
+                                        <input type="text" name="amenities" maxLength={250} value={formData.amenities} onChange={handleChange} placeholder="WiFi, Pool, Spa" className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                 </div>
                             )}
@@ -257,12 +338,16 @@ export default function CreateListing() {
                             {formData.type === 'cinema' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Movie Title</label>
-                                        <input type="text" name="movieTitle" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="block text-xs font-semibold text-slate-500">Movie Title *</label>
+                                            <span className="text-[10px] font-mono text-slate-400">{formData.movieTitle.length}/100</span>
+                                        </div>
+                                        <input type="text" name="movieTitle" maxLength={100} value={formData.movieTitle} onChange={handleChange} className={`w-full p-2.5 rounded-xl border ${errors.movieTitle ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} bg-white dark:bg-slate-800 text-sm font-semibold`} />
+                                        {errors.movieTitle && <p className="mt-1 text-xs text-red-500">{errors.movieTitle}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 mb-1">Show Time</label>
-                                        <input type="datetime-local" name="showTime" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
+                                        <input type="datetime-local" name="showTime" value={formData.showTime} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                 </div>
                             )}
@@ -270,20 +355,20 @@ export default function CreateListing() {
                             {formData.type === 'space' && (
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Area (sq ft)</label>
-                                        <input type="number" name="area" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Area (sq ft, Max 1,000,000)</label>
+                                        <input type="number" name="area" min="1" max="1000000" value={formData.area} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 mb-1">Usage Type</label>
-                                        <select name="usageType" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold">
+                                        <select name="usageType" value={formData.usageType} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold">
                                             <option value="event">Event</option>
                                             <option value="storage">Storage</option>
                                             <option value="office">Office</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Total Sections</label>
-                                        <input type="number" name="totalUnits" min="1" value={formData.totalUnits} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Total Sections (Max 1000)</label>
+                                        <input type="number" name="totalUnits" min="1" max="1000" value={formData.totalUnits} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                 </div>
                             )}
@@ -292,19 +377,22 @@ export default function CreateListing() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 mb-1">Vehicle Type</label>
-                                        <select name="vehicleType" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold">
+                                        <select name="vehicleType" value={formData.vehicleType} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold">
                                             <option value="car">Car</option>
                                             <option value="van">Van</option>
                                             <option value="bus">Bus</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Capacity</label>
-                                        <input type="number" name="capacity" onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Capacity (Max 500)</label>
+                                        <input type="number" name="capacity" min="1" max="500" value={formData.capacity} onChange={handleChange} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Features</label>
-                                        <input type="text" name="features" onChange={handleChange} placeholder="AC, GPS, Driver" className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="block text-xs font-semibold text-slate-500">Features</label>
+                                            <span className="text-[10px] font-mono text-slate-400">{formData.features.length}/250</span>
+                                        </div>
+                                        <input type="text" name="features" maxLength={250} value={formData.features} onChange={handleChange} placeholder="AC, GPS, Driver" className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold" />
                                     </div>
                                 </div>
                             )}
@@ -318,25 +406,38 @@ export default function CreateListing() {
                                 <input
                                     type="number"
                                     name="price"
-                                    className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                    min="0.01"
+                                    max="1000000"
+                                    step="0.01"
+                                    value={formData.price}
+                                    className={`w-full p-3.5 rounded-xl border ${errors.price ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-500'} bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 transition-all`}
                                     onChange={handleChange}
                                     required
                                     placeholder="0.00"
                                 />
+                                {errors.price && <p className="mt-1 text-xs text-red-500 font-medium">{errors.price}</p>}
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                                    Location *
-                                </label>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                        Location *
+                                    </label>
+                                    <span className={`text-xs font-mono font-medium ${formData.location.length >= 135 ? 'text-amber-500 font-bold' : 'text-slate-400'}`}>
+                                        {formData.location.length}/150
+                                    </span>
+                                </div>
                                 <input
                                     type="text"
                                     name="location"
-                                    className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                    maxLength={150}
+                                    value={formData.location}
+                                    className={`w-full p-3.5 rounded-xl border ${errors.location ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-500'} bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 transition-all`}
                                     onChange={handleChange}
                                     required
                                     placeholder="City, Country"
                                 />
+                                {errors.location && <p className="mt-1 text-xs text-red-500 font-medium">{errors.location}</p>}
                             </div>
                         </div>
 

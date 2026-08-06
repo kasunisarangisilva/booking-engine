@@ -25,9 +25,7 @@ export default function StepPayment({ formData, updateFormData }) {
             id: 'koko',
             name: 'Koko Pay',
             sub: 'Split into 3 interest-free payments (Coming Soon)',
-            icon: null,
-            img: 'https://booking-engine-widget.vercel.app/images/koko-logo.png',
-            imgAlt: 'Koko',
+            icon: '🛍️',
             badge: 'Buy Now Pay Later',
             disabled: true,
         },
@@ -35,9 +33,7 @@ export default function StepPayment({ formData, updateFormData }) {
             id: 'mintpay',
             name: 'Mint Pay',
             sub: 'Shop now, pay over time (Coming Soon)',
-            icon: null,
-            img: 'https://booking-engine-widget.vercel.app/images/mintpay-logo.png',
-            imgAlt: 'Mint Pay',
+            icon: '🍃',
             badge: 'Coming Soon',
             disabled: true,
         },
@@ -161,46 +157,129 @@ export default function StepPayment({ formData, updateFormData }) {
                     {paymentMethods.map(method => {
                         const isSelected = selectedMethod === method.id;
                         return (
-                            <div
-                                key={method.id}
-                                className={`w-option-card ${isSelected ? 'selected' : ''} ${method.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
-                                onClick={() => handleSelect(method)}
-                                style={{ position: 'relative', opacity: method.disabled ? 0.6 : 1 }}
-                            >
-                                {method.badge && (
-                                    <span style={{
-                                        position: 'absolute', top: -10, right: 16,
-                                        fontSize: 10, fontWeight: 800,
-                                        textTransform: 'uppercase', letterSpacing: '0.08em',
-                                        background: 'var(--w-accent)',
-                                        color: 'var(--w-accent-text)',
-                                        padding: '3px 10px', borderRadius: 999,
-                                    }}>
-                                        {method.badge}
-                                    </span>
-                                )}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                                    <div className="w-icon-circle" style={{ background: isSelected ? 'color-mix(in srgb, var(--w-accent) 10%, white)' : undefined }}>
-                                        {method.icon ? (
-                                            <span style={{ fontSize: 24 }}>{method.icon}</span>
-                                        ) : (
-                                            <img src={method.img} alt={method.imgAlt} style={{ maxWidth: 52, maxHeight: 24, objectFit: 'contain' }} />
-                                        )}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{
-                                            fontWeight: 800, fontSize: 15,
-                                            color: isSelected ? 'var(--w-accent)' : 'var(--w-text)',
-                                            marginBottom: 3,
+                            <div key={method.id}>
+                                <div
+                                    className={`w-option-card ${isSelected ? 'selected' : ''} ${method.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                    onClick={() => handleSelect(method)}
+                                    style={{ position: 'relative', opacity: method.disabled ? 0.6 : 1 }}
+                                >
+                                    {method.badge && (
+                                        <span style={{
+                                            position: 'absolute', top: -10, right: 16,
+                                            fontSize: 10, fontWeight: 800,
+                                            textTransform: 'uppercase', letterSpacing: '0.08em',
+                                            background: 'var(--w-accent)',
+                                            color: 'var(--w-accent-text)',
+                                            padding: '3px 10px', borderRadius: 999,
                                         }}>
-                                            {method.name}
+                                            {method.badge}
+                                        </span>
+                                    )}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                        <div className="w-icon-circle" style={{ background: isSelected ? 'color-mix(in srgb, var(--w-accent) 10%, white)' : undefined }}>
+                                            {method.icon ? (
+                                                <span style={{ fontSize: 24 }}>{method.icon}</span>
+                                            ) : (
+                                                <img src={method.img} alt={method.imgAlt} style={{ maxWidth: 52, maxHeight: 24, objectFit: 'contain' }} />
+                                            )}
                                         </div>
-                                        <div style={{ fontSize: 12, color: 'var(--w-text-muted)', fontWeight: 500 }}>
-                                            {method.sub}
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{
+                                                fontWeight: 800, fontSize: 15,
+                                                color: isSelected ? 'var(--w-accent)' : 'var(--w-text)',
+                                                marginBottom: 3,
+                                            }}>
+                                                {method.name}
+                                            </div>
+                                            <div style={{ fontSize: 12, color: 'var(--w-text-muted)', fontWeight: 500 }}>
+                                                {method.sub}
+                                            </div>
                                         </div>
                                     </div>
+                                    <div className="w-radio-dot" />
                                 </div>
-                                <div className="w-radio-dot" />
+
+                                {/* Inline Credit Card details form */}
+                                {isSelected && method.id === 'card' && (
+                                    <div className="w-glass-card" style={{ marginTop: 12, padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                                <label style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--w-text-muted)' }}>
+                                                    Cardholder Name *
+                                                </label>
+                                                <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--w-text-muted)' }}>
+                                                    {(formData.cardName || '').length}/60
+                                                </span>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                maxLength={60}
+                                                placeholder="John Doe"
+                                                className="w-input"
+                                                value={formData.cardName || ''}
+                                                onChange={(e) => updateFormData({ cardName: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                                <label style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--w-text-muted)' }}>
+                                                    Card Number *
+                                                </label>
+                                                <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--w-text-muted)' }}>
+                                                    {(formData.cardNumber || '').length}/19
+                                                </span>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                maxLength={19}
+                                                placeholder="1234 5678 9012 3456"
+                                                className="w-input"
+                                                value={formData.cardNumber || ''}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+                                                    updateFormData({ cardNumber: val.slice(0, 19) });
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--w-text-muted)', marginBottom: 6 }}>
+                                                    Expiry (MM/YY) *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    maxLength={5}
+                                                    placeholder="MM/YY"
+                                                    className="w-input"
+                                                    value={formData.cardExpiry || ''}
+                                                    onChange={(e) => {
+                                                        let val = e.target.value.replace(/\D/g, '');
+                                                        if (val.length >= 3) val = val.slice(0, 2) + '/' + val.slice(2, 4);
+                                                        updateFormData({ cardExpiry: val.slice(0, 5) });
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--w-text-muted)', marginBottom: 6 }}>
+                                                    CVV *
+                                                </label>
+                                                <input
+                                                    type="password"
+                                                    maxLength={4}
+                                                    placeholder="123"
+                                                    className="w-input"
+                                                    value={formData.cardCvv || ''}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                                                        updateFormData({ cardCvv: val });
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}

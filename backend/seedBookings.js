@@ -3,8 +3,9 @@ const mongoose = require('mongoose');
 const Booking = require('./database/models/Booking');
 
 async function seed() {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/multi-vendor-booking');
-    console.log('Connected to DB');
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/booking-engine';
+    await mongoose.connect(mongoUri);
+    console.log('Connected to DB:', mongoUri);
 
     await Booking.deleteMany({});
 

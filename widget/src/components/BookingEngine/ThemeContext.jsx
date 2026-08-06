@@ -58,11 +58,11 @@ export const PRESET_THEMES = {
 };
 
 export const FONT_OPTIONS = [
-    { id: 'inter', label: 'Inter', css: "'Inter', sans-serif", url: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap' },
-    { id: 'outfit', label: 'Outfit', css: "'Outfit', sans-serif", url: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap' },
-    { id: 'poppins', label: 'Poppins', css: "'Poppins', sans-serif", url: 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap' },
-    { id: 'sora', label: 'Sora', css: "'Sora', sans-serif", url: 'https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap' },
-    { id: 'space-grotesk', label: 'Space Grotesk', css: "'Space Grotesk', sans-serif", url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap' },
+    { id: 'inter', label: 'Inter', css: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", url: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap' },
+    { id: 'outfit', label: 'Outfit', css: "'Outfit', system-ui, -apple-system, sans-serif", url: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap' },
+    { id: 'poppins', label: 'Poppins', css: "'Poppins', system-ui, -apple-system, sans-serif", url: 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap' },
+    { id: 'sora', label: 'Sora', css: "'Sora', system-ui, -apple-system, sans-serif", url: 'https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap' },
+    { id: 'space-grotesk', label: 'Space Grotesk', css: "'Space Grotesk', system-ui, -apple-system, sans-serif", url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap' },
 ];
 
 export const RADIUS_OPTIONS = [
@@ -87,14 +87,16 @@ export function ThemeProvider({ children, initialTheme = 'ocean', initialFont = 
     const isDark = themeKey === 'midnight';
 
     useEffect(() => {
-        // Inject Google Font
-        const linkId = `widget-font-${fontId}`;
-        if (!document.getElementById(linkId)) {
-            const link = document.createElement('link');
-            link.id = linkId;
-            link.rel = 'stylesheet';
-            link.href = activeFont.url;
-            document.head.appendChild(link);
+        // Inject Google Font if online
+        if (typeof window !== 'undefined' && navigator.onLine) {
+            const linkId = `widget-font-${fontId}`;
+            if (!document.getElementById(linkId)) {
+                const link = document.createElement('link');
+                link.id = linkId;
+                link.rel = 'stylesheet';
+                link.href = activeFont.url;
+                document.head.appendChild(link);
+            }
         }
     }, [fontId]);
 
