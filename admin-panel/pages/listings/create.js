@@ -70,7 +70,17 @@ export default function CreateListing() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        if (name === 'type') {
+            let defaultRoomType = formData.roomType;
+            if (value === 'hostel' && !['dormitory', 'private', 'mixed'].includes(formData.roomType)) {
+                defaultRoomType = 'dormitory';
+            } else if (value === 'hotel' && !['single', 'double', 'king'].includes(formData.roomType)) {
+                defaultRoomType = 'single';
+            }
+            setFormData(prev => ({ ...prev, [name]: value, roomType: defaultRoomType }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
         // Clear field error on change
         if (errors[name]) {
             setErrors({ ...errors, [name]: null });

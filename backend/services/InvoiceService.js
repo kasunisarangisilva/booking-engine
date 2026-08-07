@@ -119,6 +119,10 @@ class InvoiceService {
                 y += 16;
 
                 // ── Totals ─────────────────────────────────────────────────
+                const total = booking.totalPrice || 0;
+                const totW  = 230;
+                const totX  = margin + contentW - totW;
+
                 /* ============================================================================
                  * 🎓 VIVA CODE MODIFICATION TASK 1: ADD TAX / SERVICE CHARGE BREAKDOWN TO PDF
                  * ----------------------------------------------------------------------------

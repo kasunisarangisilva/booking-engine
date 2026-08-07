@@ -113,6 +113,16 @@ class ListingService {
         
         delete updateData.vendorId;
         delete updateData.type;
+
+        if (listing.type === 'hostel') {
+            if (!['dormitory', 'private', 'mixed'].includes(updateData.roomType)) {
+                updateData.roomType = listing.roomType || 'dormitory';
+            }
+        } else if (listing.type === 'hotel') {
+            if (!['single', 'double', 'king'].includes(updateData.roomType)) {
+                updateData.roomType = listing.roomType || 'single';
+            }
+        }
         
         Object.assign(listing, updateData);
         return await listing.save();

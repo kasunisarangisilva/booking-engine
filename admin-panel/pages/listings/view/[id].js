@@ -85,76 +85,76 @@ export default function ViewListing() {
                         <h3 className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-6 underline underline-offset-8">Category Details</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                            {listing.details?.roomType && (
+                            {(listing.roomType || listing.details?.roomType) && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Room Type</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white capitalize">{listing.details.roomType}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white capitalize">{listing.roomType || listing.details?.roomType}</p>
                                 </div>
                             )}
-                            {listing.details?.totalRooms && (
+                            {(listing.totalRooms || listing.details?.totalRooms) && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Total Rooms</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white">{listing.details.totalRooms}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{listing.totalRooms || listing.details?.totalRooms}</p>
                                 </div>
                             )}
-                            {listing.details?.amenities?.length > 0 && (
+                            {((listing.amenities && listing.amenities.length > 0) || listing.details?.amenities?.length > 0) && (
                                 <div className="sm:col-span-2 lg:col-span-3">
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Amenities</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white">{listing.details.amenities.join(', ')}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{(listing.amenities || listing.details?.amenities).join(', ')}</p>
                                 </div>
                             )}
-                            {listing.details?.movieTitle && (
+                            {(listing.movieTitle || listing.details?.movieTitle) && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Movie Title</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white">{listing.details.movieTitle}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{listing.movieTitle || listing.details?.movieTitle}</p>
                                 </div>
                             )}
-                            {listing.details?.showTime && (
+                            {(listing.showTime || listing.details?.showTime) && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Show Time</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white">{new Date(listing.details.showTime).toLocaleString()}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{new Date(listing.showTime || listing.details?.showTime).toLocaleString()}</p>
                                 </div>
                             )}
-                            {listing.details?.seatLayout && (
+                            {(listing.seatLayout || listing.details?.seatLayout) && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Seating</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white">{listing.details.seatLayout.rows} Rows x {listing.details.seatLayout.cols} Cols</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{(listing.seatLayout || listing.details?.seatLayout).rows} Rows x {(listing.seatLayout || listing.details?.seatLayout).cols} Cols</p>
                                 </div>
                             )}
-                            {listing.details?.area && (
+                            {(listing.area || listing.details?.area) && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Area</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white">{listing.details.area} sq ft</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{listing.area || listing.details?.area} sq ft</p>
                                 </div>
                             )}
-                            {listing.details?.usageType && (
+                            {(listing.usageType || listing.details?.usageType) && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Usage Type</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white capitalize">{listing.details.usageType}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white capitalize">{listing.usageType || listing.details?.usageType}</p>
                                 </div>
                             )}
-                            {listing.details?.vehicleType && (
+                            {(listing.vehicleType || listing.details?.vehicleType) && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Vehicle Type</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white capitalize">{listing.details.vehicleType}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white capitalize">{listing.vehicleType || listing.details?.vehicleType}</p>
                                 </div>
                             )}
-                            {listing.details?.capacity && (
+                            {(listing.capacity || listing.details?.capacity) && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Capacity</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white">{listing.details.capacity} Persons</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{listing.capacity || listing.details?.capacity} Persons</p>
                                 </div>
                             )}
-                            {listing.details?.totalUnits && (
+                            {(listing.totalUnits || listing.details?.totalUnits) && (
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Total Units</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white">{listing.details.totalUnits}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{listing.totalUnits || listing.details?.totalUnits}</p>
                                 </div>
                             )}
-                            {listing.details?.features?.length > 0 && (
+                            {((listing.features && listing.features.length > 0) || listing.details?.features?.length > 0) && (
                                 <div className="sm:col-span-2 lg:col-span-3">
                                     <h4 className="text-xs font-bold text-slate-500 uppercase">Features</h4>
-                                    <p className="font-bold text-slate-900 dark:text-white">{listing.details.features.join(', ')}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{(listing.features || listing.details?.features).join(', ')}</p>
                                 </div>
                             )}
                         </div>

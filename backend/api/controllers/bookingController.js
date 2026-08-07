@@ -135,7 +135,9 @@ const BookingController = {
             await invoiceService.generateInvoice(booking, res);
         } catch (error) {
             console.error('Invoice download error:', error);
-            res.status(500).json({ message: error.message });
+            if (!res.headersSent) {
+                res.status(500).json({ message: error.message });
+            }
         }
     },
 

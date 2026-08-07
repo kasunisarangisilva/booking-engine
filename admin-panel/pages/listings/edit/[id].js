@@ -67,19 +67,19 @@ export default function EditListing() {
                 price: data.price || '',
                 location: data.location || '',
                 vendorId: data.vendorId?._id || data.vendorId || '',
-                roomType: data.details?.roomType || 'single',
-                totalRooms: data.details?.totalRooms || '5',
-                movieTitle: data.details?.movieTitle || '',
-                showTime: data.details?.showTime || '',
-                seatRows: data.details?.seatLayout?.rows || '10',
-                seatCols: data.details?.seatLayout?.cols || '10',
-                area: data.details?.area || '',
-                usageType: data.details?.usageType || 'event',
-                totalUnits: data.details?.totalUnits || '1',
-                vehicleType: data.details?.vehicleType || 'car',
-                capacity: data.details?.capacity || '',
-                features: data.details?.features?.join(', ') || '',
-                amenities: data.details?.amenities?.join(', ') || ''
+                roomType: data.roomType || data.details?.roomType || (data.type === 'hostel' ? 'dormitory' : 'single'),
+                totalRooms: data.totalRooms || data.details?.totalRooms || '5',
+                movieTitle: data.movieTitle || data.details?.movieTitle || '',
+                showTime: data.showTime || data.details?.showTime || '',
+                seatRows: data.seatLayout?.rows || data.details?.seatLayout?.rows || '10',
+                seatCols: data.seatLayout?.cols || data.details?.seatLayout?.cols || '10',
+                area: data.area || data.details?.area || '',
+                usageType: data.usageType || data.details?.usageType || 'event',
+                totalUnits: data.totalUnits || data.details?.totalUnits || '1',
+                vehicleType: data.vehicleType || data.details?.vehicleType || 'car',
+                capacity: data.capacity || data.details?.capacity || '',
+                features: Array.isArray(data.features) ? data.features.join(', ') : (data.details?.features?.join(', ') || ''),
+                amenities: Array.isArray(data.amenities) ? data.amenities.join(', ') : (data.details?.amenities?.join(', ') || '')
             });
             setLoading(false);
         } catch (err) {
@@ -106,7 +106,17 @@ export default function EditListing() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        if (name === 'type') {
+            let defaultRoomType = formData.roomType;
+            if (value === 'hostel' && !['dormitory', 'private', 'mixed'].includes(formData.roomType)) {
+                defaultRoomType = 'dormitory';
+            } else if (value === 'hotel' && !['single', 'double', 'king'].includes(formData.roomType)) {
+                defaultRoomType = 'single';
+            }
+            setFormData(prev => ({ ...prev, [name]: value, roomType: defaultRoomType }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
         if (errors[name]) {
             setErrors({ ...errors, [name]: null });
         }

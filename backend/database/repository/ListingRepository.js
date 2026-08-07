@@ -1,11 +1,20 @@
-const { Listing, HotelListing, CinemaListing, SpaceListing, VehicleListing } = require('../models/Listing');
+const { Listing, HotelListing, CinemaListing, SpaceListing, VehicleListing, HostelListing } = require('../models/Listing');
 
 class ListingRepository {
     async create(type, data) {
         let newListing;
         switch (type) {
             case 'hotel':
+                if (!['single', 'double', 'king'].includes(data.roomType)) {
+                    data.roomType = 'single';
+                }
                 newListing = new HotelListing(data);
+                break;
+            case 'hostel':
+                if (!['dormitory', 'private', 'mixed'].includes(data.roomType)) {
+                    data.roomType = 'dormitory';
+                }
+                newListing = new HostelListing(data);
                 break;
             case 'cinema':
                 newListing = new CinemaListing(data);
