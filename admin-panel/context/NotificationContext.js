@@ -13,6 +13,7 @@ export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [lastBookingEvent, setLastBookingEvent] = useState(null);
 
     // Fetch notifications from API
     const fetchNotifications = async () => {
@@ -33,6 +34,10 @@ export const NotificationProvider = ({ children }) => {
 
     useEffect(() => {
         fetchNotifications();
+        const interval = setInterval(() => {
+            fetchNotifications();
+        }, 10000);
+        return () => clearInterval(interval);
     }, [user, token]);
 
     // Calculate unread count whenever notifications change
@@ -43,40 +48,57 @@ export const NotificationProvider = ({ children }) => {
     useEffect(() => {
         if (!user) return;
 
-        console.log('[Socket] User object:', user);
+        const userId = user._id || user.id;
+        console.log('[Socket] User object:', user, 'Resolved ID:', userId);
         const socket = io(SOCKET_URL);
 
-        socket.on('connect', () => {
+        const joinRooms = () => {
             if (user.role === 'admin') {
                 console.log('[Socket] Admin joining room: admin');
                 socket.emit('join_room', 'admin');
             } else if (user.role === 'vendor') {
-                const vendorRoom = `vendor_${user._id}`;
-                console.log('[Socket] Vendor joining room:', vendorRoom, 'User ID:', user._id);
+                const vendorRoom = `vendor_${userId}`;
+                console.log('[Socket] Vendor joining room:', vendorRoom, 'User ID:', userId);
                 socket.emit('join_room', vendorRoom);
             }
-        });
+        };
+
+        socket.on('connect', joinRooms);
+        if (socket.connected) {
+            joinRooms();
+        }
 
         socket.on('notification', (data) => {
             console.log('[Socket] Received notification:', data);
-            // Add new notification to state directly (it's already in DB)
-            setNotifications(prev => [data, ...prev]);
 
-            toast(data.message, {
-                duration: 5000,
-                position: 'top-right',
-                icon: '🔔',
-                style: {
-                    background: '#333',
-                    color: '#fff',
-                },
+            if (data.type === 'new_booking' || data.type === 'booking_confirmed' || data.data?.bookingId || data.data?._id) {
+                setLastBookingEvent(data);
+            }
+
+            setNotifications(prev => {
+                const notifId = data._id || data.id;
+                const exists = notifId && prev.some(n => (n._id || n.id) === notifId);
+
+                if (exists) {
+                    // Update existing notification in-place (e.g. new_booking → booking_confirmed)
+                    return prev.map(n => ((n._id || n.id) === notifId) ? { ...n, ...data } : n);
+                }
+
+                // New notification — play alert and add to list
+                toast(data.message, {
+                    duration: 5000,
+                    position: 'top-right',
+                    icon: '🔔',
+                    style: { background: '#333', color: '#fff' },
+                });
+
+                try {
+                    const audio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//oeZhAAAAABJAAAAAAAAAAEBCAgIAAAASgAAAAE2AAAAJF//oeZhsAAAAASQAAAAAAAAABIQgICAAAQEoAAAABNgAAACRf/6HmYwAAAAAEkAAAAAAAAAASEICAgAABBKAAAAATYAAAAkX/+h5mOAAAAABJAAAAAAAAAAEhCAgIAAAQSP////7AAAACRgAAAA//oeZkAAAAAASQAAAAAAAAABIQgICAAAEEn/////sAAAAJGAAAAD/+h5mSAAAAAAEkAAAAAAAAAASEICAgAABBJ/////7AAAACRgAAAA//oeZkwAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZUAAAAAASQAAAAAAAAABIQgICAAAEEn/////sAAAAJGAAAAD/+h5mWAAAAAAEkAAAAAAAAAASEICAgAABBJ/////7AAAACRgAAAA//oeZlwAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZgAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZoAAAAAASQAAAAAAAAABIQgICAAAEEn/////sAAAAJGAAAAD/+h5maAAAAAAEkAAAAAAAAAASEICAgAABBJ/////7AAAACRgAAAA//oeZmwAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZwAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZ0AAAAAASQAAAAAAAAABIQgICAAAEEn/////sAAAAJGAAAAD/+h5meAAAAAAEkAAAAAAAAAASEICAgAABBJ/////7AAAACRgAAAA//oeZnAAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZ4AAAAAASQAAAAAAAAABIQgICAAAEEn/////sAAAAJGAAAAD');
+                    audio.play().catch(e => console.log('Audio play failed', e));
+                } catch (e) { }
+
+                return [data, ...prev];
             });
-
-            try {
-                // Simple beep sound
-                const audio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//oeZhAAAAABJAAAAAAAAAAEBCAgIAAAASgAAAAE2AAAAJF//oeZhsAAAAASQAAAAAAAAABIQgICAAAQEoAAAABNgAAACRf/6HmYwAAAAAEkAAAAAAAAAASEICAgAABBKAAAAATYAAAAkX/+h5mOAAAAABJAAAAAAAAAAEhCAgIAAAQSP////7AAAACRgAAAA//oeZkAAAAAASQAAAAAAAAABIQgICAAAEEn/////sAAAAJGAAAAD/+h5mSAAAAAAEkAAAAAAAAAASEICAgAABBJ/////7AAAACRgAAAA//oeZkwAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZUAAAAAASQAAAAAAAAABIQgICAAAEEn/////sAAAAJGAAAAD/+h5mWAAAAAAEkAAAAAAAAAASEICAgAABBJ/////7AAAACRgAAAA//oeZlwAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZgAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZoAAAAAASQAAAAAAAAABIQgICAAAEEn/////sAAAAJGAAAAD/+h5maAAAAAAEkAAAAAAAAAASEICAgAABBJ/////7AAAACRgAAAA//oeZmwAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZwAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZ0AAAAAASQAAAAAAAAABIQgICAAAEEn/////sAAAAJGAAAAD/+h5meAAAAAAEkAAAAAAAAAASEICAgAABBJ/////7AAAACRgAAAA//oeZnAAAAAABJAAAAAAAAAAEhCAgIAAAQSf////+wAAAAkYAAAAP/6HmZ4AAAAAASQAAAAAAAAABIQgICAAAEEn/////sAAAAJGAAAAD');
-                audio.play().catch(e => console.log('Audio play failed (user interaction maybe required)', e));
-            } catch (e) { }
         });
 
         return () => {
@@ -150,6 +172,7 @@ export const NotificationProvider = ({ children }) => {
         <NotificationContext.Provider value={{
             notifications,
             unreadCount,
+            lastBookingEvent,
             isDrawerOpen,
             openDrawer,
             closeDrawer,

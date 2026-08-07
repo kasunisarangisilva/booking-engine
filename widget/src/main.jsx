@@ -14,8 +14,8 @@ class BookingWidget extends HTMLElement {
     styleElement.textContent = indexCss;
     shadow.appendChild(styleElement);
 
-    // 2. Inject Google Fonts into document.head if not present
-    if (!document.head.querySelector('link[data-widget-fonts]')) {
+    // 2. Inject Google Fonts into document.head if online
+    if (typeof window !== 'undefined' && navigator.onLine && !document.head.querySelector('link[data-widget-fonts]')) {
       const fontLink = document.createElement('link');
       fontLink.rel = 'stylesheet';
       fontLink.setAttribute('data-widget-fonts', 'true');

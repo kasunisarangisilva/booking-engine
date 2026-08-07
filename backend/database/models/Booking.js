@@ -22,7 +22,7 @@ const bookingSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['card', 'paypal', 'crypto', 'koko', 'mintpay'],
+        enum: ['card', 'paypal', 'crypto', 'koko', 'mintpay', 'bank_transfer', 'cash'],
         default: 'card'
     },
     cancellationReason: {
@@ -42,6 +42,10 @@ const bookingSchema = new mongoose.Schema({
     phone: {
         type: String,
         trim: true
+    },
+    isRead: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

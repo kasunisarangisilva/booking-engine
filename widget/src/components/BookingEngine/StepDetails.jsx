@@ -70,9 +70,15 @@ export default function StepDetails({ formData, updateFormData }) {
 
                 {/* Full Name */}
                 <div>
-                    <label style={labelStyle}>Full Name *</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={labelStyle}>Full Name *</label>
+                        <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--w-text-muted)' }}>
+                            {(formData.name || '').length}/60
+                        </span>
+                    </div>
                     <input
                         type="text"
+                        maxLength={60}
                         placeholder="e.g. John Doe"
                         className="w-input"
                         value={formData.name || ''}
@@ -83,9 +89,15 @@ export default function StepDetails({ formData, updateFormData }) {
 
                 {/* Email */}
                 <div>
-                    <label style={labelStyle}>Email Address *</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={labelStyle}>Email Address *</label>
+                        <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--w-text-muted)' }}>
+                            {(formData.email || '').length}/100
+                        </span>
+                    </div>
                     <input
                         type="email"
+                        maxLength={100}
                         placeholder="e.g. john@example.com"
                         className="w-input"
                         value={formData.email || ''}
@@ -96,9 +108,15 @@ export default function StepDetails({ formData, updateFormData }) {
 
                 {/* Phone */}
                 <div>
-                    <label style={labelStyle}>Phone Number *</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={labelStyle}>Phone Number *</label>
+                        <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--w-text-muted)' }}>
+                            {(formData.phone || '').length}/20
+                        </span>
+                    </div>
                     <input
                         type="tel"
+                        maxLength={20}
                         placeholder="e.g. +94771234567"
                         className="w-input"
                         value={formData.phone || ''}
@@ -109,9 +127,15 @@ export default function StepDetails({ formData, updateFormData }) {
 
                 {/* Location */}
                 <div>
-                    <label style={labelStyle}>📍 Your Location</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={labelStyle}>📍 Your Location</label>
+                        <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--w-text-muted)' }}>
+                            {(formData.location || '').length}/100
+                        </span>
+                    </div>
                     <input
                         type="text"
+                        maxLength={100}
                         placeholder="e.g. Colombo, Sri Lanka"
                         className="w-input"
                         value={formData.location || ''}
@@ -124,11 +148,17 @@ export default function StepDetails({ formData, updateFormData }) {
 
                 {/* Special Requirements */}
                 <div>
-                    <label style={labelStyle}>✨ Special Requirements</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={labelStyle}>✨ Special Requirements</label>
+                        <span style={{ fontSize: 10, fontFamily: 'monospace', color: (formData.specialRequirements || '').length >= 450 ? 'var(--w-accent)' : 'var(--w-text-muted)' }}>
+                            {(formData.specialRequirements || '').length}/500
+                        </span>
+                    </div>
                     <textarea
                         placeholder="e.g. Early check-in, vegetarian meal, wheelchair access..."
                         className="w-input"
                         rows={3}
+                        maxLength={500}
                         value={formData.specialRequirements || ''}
                         onChange={(e) => updateFormData({ specialRequirements: e.target.value })}
                         style={{

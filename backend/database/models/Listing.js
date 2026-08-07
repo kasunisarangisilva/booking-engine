@@ -16,20 +16,29 @@ const listingSchema = new mongoose.Schema({
     title: {
         type: String,
         required: [true, 'Title is required'],
+        minlength: [3, 'Title must be at least 3 characters'],
+        maxlength: [100, 'Title cannot exceed 100 characters'],
         trim: true
     },
     description: {
         type: String,
-        required: [true, 'Description is required']
+        required: [true, 'Description is required'],
+        minlength: [10, 'Description must be at least 10 characters'],
+        maxlength: [1000, 'Description cannot exceed 1000 characters'],
+        trim: true
     },
     price: {
         type: Number,
         required: [true, 'Price is required'],
-        min: 0
+        min: [0.01, 'Price must be greater than 0'],
+        max: [1000000, 'Price cannot exceed $1,000,000']
     },
     location: {
         type: String,
-        required: [true, 'Location is required']
+        required: [true, 'Location is required'],
+        minlength: [2, 'Location must be at least 2 characters'],
+        maxlength: [150, 'Location cannot exceed 150 characters'],
+        trim: true
     }
 }, baseOptions);
 
@@ -50,7 +59,8 @@ const HotelListing = Listing.discriminator('hotel', new mongoose.Schema({
     totalRooms: {
         type: Number,
         default: 5,
-        min: 1
+        min: [1, 'Total rooms must be at least 1'],
+        max: [1000, 'Total rooms cannot exceed 1000']
     }
 }));
 
@@ -58,15 +68,18 @@ const HotelListing = Listing.discriminator('hotel', new mongoose.Schema({
 const CinemaListing = Listing.discriminator('cinema', new mongoose.Schema({
     movieTitle: {
         type: String,
-        required: true
+        required: [true, 'Movie title is required'],
+        minlength: [1, 'Movie title is required'],
+        maxlength: [100, 'Movie title cannot exceed 100 characters'],
+        trim: true
     },
     showTime: {
         type: Date,
         required: true
     },
     seatLayout: {
-        rows: { type: Number, required: true },
-        cols: { type: Number, required: true },
+        rows: { type: Number, required: true, min: [1, 'Rows must be at least 1'], max: [50, 'Rows cannot exceed 50'] },
+        cols: { type: Number, required: true, min: [1, 'Cols must be at least 1'], max: [50, 'Cols cannot exceed 50'] },
         aisles: { type: [Number], default: [] }
     }
 }));
@@ -76,7 +89,8 @@ const SpaceListing = Listing.discriminator('space', new mongoose.Schema({
     area: {
         type: Number,
         required: true,
-        min: 0
+        min: [1, 'Area must be at least 1 sq ft'],
+        max: [1000000, 'Area cannot exceed 1,000,000 sq ft']
     },
     usageType: {
         type: String,
@@ -86,7 +100,8 @@ const SpaceListing = Listing.discriminator('space', new mongoose.Schema({
     totalUnits: {
         type: Number,
         default: 1,
-        min: 1
+        min: [1, 'Total units must be at least 1'],
+        max: [1000, 'Total units cannot exceed 1000']
     }
 }));
 
@@ -104,12 +119,14 @@ const VehicleListing = Listing.discriminator('vehicle', new mongoose.Schema({
     capacity: {
         type: Number,
         required: true,
-        min: 1
+        min: [1, 'Capacity must be at least 1 passenger'],
+        max: [500, 'Capacity cannot exceed 500 passengers']
     },
     totalUnits: {
         type: Number,
         default: 1,
-        min: 1
+        min: [1, 'Total units must be at least 1'],
+        max: [1000, 'Total units cannot exceed 1000']
     }
 }));
 
@@ -127,7 +144,8 @@ const HostelListing = Listing.discriminator('hostel', new mongoose.Schema({
     totalRooms: {
         type: Number,
         default: 5,
-        min: 1
+        min: [1, 'Total rooms must be at least 1'],
+        max: [1000, 'Total rooms cannot exceed 1000']
     }
 }));
 

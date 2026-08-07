@@ -1,31 +1,71 @@
 const BookingRepository = require('../database/repository/BookingRepository');
 const { Listing } = require('../database/models/Listing');
+const Notification = require('../database/models/Notification');
+const lockManager = require('../utils/lockManager');
 
 class BookingService {
     constructor() {
         this.bookingRepo = new BookingRepository();
     }
 
-    async createBooking(bookingData) {
+    async createBooking(bookingData, io) {
         const { userId, listingId, details, totalPrice, paymentMethod, phone } = bookingData;
 
         const listing = await Listing.findById(listingId);
         if (!listing) throw new Error('Listing not found');
 
-        const existingBookings = await this.bookingRepo.findByListingAndStatus(listingId, ['confirmed', 'pending', 'awaiting_payment']);
+        const lockKey = `booking_listing_${listingId}`;
 
-        // Availability check logic
-        this.checkAvailability(listing, details, existingBookings);
+        return await lockManager.runWithLock(lockKey, async () => {
+            // Fresh DB query inside atomic lock window
+            const existingBookings = await this.bookingRepo.findByListingAndStatus(listingId, ['confirmed', 'pending', 'awaiting_payment']);
 
-        const newBooking = await this.bookingRepo.create({
-            userId, listingId, details, status: 'awaiting_payment',
-            paymentMethod: paymentMethod || 'card', totalPrice, phone
+            // Availability check logic
+            this.checkAvailability(listing, details, existingBookings);
+
+            const newBooking = await this.bookingRepo.create({
+                userId, listingId, details, status: 'awaiting_payment',
+                paymentMethod: paymentMethod || 'card', totalPrice, phone
+            });
+
+            await newBooking.populate('listingId', 'title type price vendorId');
+            await newBooking.populate('userId', 'name email');
+
+            const customerName = details?.customerName || newBooking.userId?.name || 'Customer';
+            const listingTitle = listing.title || 'Listing';
+
+            // Notify Vendor only for payment methods that require async confirmation (card/stripe).
+            // For bank_transfer / cash, local-confirm fires immediately so we skip new_booking
+            // and let notifyBookingConfirmed send a single booking_confirmed notification.
+            const isImmediatePayment = (paymentMethod === 'bank_transfer' || paymentMethod === 'cash');
+            if (listing.vendorId && !isImmediatePayment) {
+                const vendorIdStr = listing.vendorId.toString();
+                try {
+                    const vendorNotif = new Notification({
+                        recipient: vendorIdStr,
+                        type: 'new_booking',
+                        message: `New booking received for "${listingTitle}" by ${customerName}.`,
+                        data: {
+                            bookingId: newBooking._id,
+                            listingId: listing._id,
+                            customerName
+                        }
+                    });
+                    await vendorNotif.save();
+
+                    if (io) {
+                        io.to(`vendor_${vendorIdStr}`).emit('notification', {
+                            ...vendorNotif.toObject(),
+                            data: newBooking
+                        });
+                    }
+                } catch (err) {
+                    console.error('Failed to create vendor notification:', err);
+                }
+            }
+
+            return newBooking;
         });
-
-        await newBooking.populate('listingId', 'title type price');
-        await newBooking.populate('userId', 'name email');
-
-        return newBooking;
     }
 
     checkAvailability(listing, details, existingBookings) {
@@ -52,6 +92,19 @@ class BookingService {
         return await this.bookingRepo.findByUser(userId);
     }
 
+    /* ============================================================================
+     * 🎓 VIVA CODE MODIFICATION TASK 4: SORT BOOKINGS BY PRICE / DATE IN BACKEND API
+     * ----------------------------------------------------------------------------
+     * If examiner asks to sort bookings by price (high to low / low to high) or status:
+     * Modify Mongo query sort option inside BookingRepository or BookingService:
+     * 
+     * // Sort by Total Price High to Low:
+     * const bookings = await BookingModel.find(query).sort({ totalPrice: -1 }).skip(skip).limit(limit);
+     * 
+     * // Sort by Total Price Low to High:
+     * const bookings = await BookingModel.find(query).sort({ totalPrice: 1 }).skip(skip).limit(limit);
+     * ============================================================================
+     */
     async getAllBookings(page, limit) {
         const skip = (page - 1) * limit;
         const bookings = await this.bookingRepo.findAllPaginated(skip, limit);
@@ -136,6 +189,21 @@ class BookingService {
 
         await this.bookingRepo.delete(id);
         return true;
+    }
+
+    async markAsRead(id, userRole, userId) {
+        const booking = await this.getBookingById(id);
+        if (userRole === 'vendor') {
+            if (booking.listingId?.vendorId && booking.listingId.vendorId.toString() !== userId.toString()) {
+                throw new Error('Not authorized to update this booking');
+            }
+        } else if (userRole !== 'admin') {
+            throw new Error('Not authorized to update this booking');
+        }
+
+        booking.isRead = true;
+        await booking.save();
+        return { success: true, booking };
     }
 
     async getCustomers(userRole, userId) {

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import AdminLayout from "../components/AdminLayout";
+import { useNotification } from "../context/NotificationContext";
 import {
     Eye,
     CheckCircle2,
@@ -38,9 +39,17 @@ export default function Vendors() {
     const [confirmModal, setConfirmModal] = useState(null); // { vendor, action }
     const [actionLoading, setActionLoading] = useState(false);
 
+    const { notifications } = useNotification();
+
     useEffect(() => {
         fetchVendors();
     }, []);
+
+    useEffect(() => {
+        if (notifications && notifications.length > 0) {
+            fetchVendors();
+        }
+    }, [notifications]);
 
     const fetchVendors = async () => {
         setLoading(true);
@@ -284,6 +293,16 @@ export default function Vendors() {
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse min-w-200">
                         <thead>
+                            {/* ============================================================================
+                             * 🎓 VIVA CODE MODIFICATION TASK 3: ADD VENDOR PHONE COLUMN & STATUS FILTER
+                             * ----------------------------------------------------------------------------
+                             * If examiner asks to add Vendor Phone Column or extra Vendor Type Filter:
+                             * 1. Add <th className="p-4">Phone Number</th> to <thead> below.
+                             * 2. Add <td className="p-4 text-xs font-semibold text-slate-700">{vendor.phone || 'N/A'}</td> to <tbody>.
+                             * 3. In filteredVendors logic:
+                             *    const matchesPhone = !phoneSearch || (vendor.phone && vendor.phone.includes(phoneSearch));
+                             * ============================================================================
+                             */}
                             <tr className="border-b border-slate-200 dark:border-slate-700 text-left bg-slate-50/50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
                                 <th className="p-4 pl-6">Vendor Details</th>
                                 <th className="p-4">Type</th>
@@ -320,16 +339,21 @@ export default function Vendors() {
                                 : paginatedVendors.map((vendor) => (
                                     <tr
                                         key={vendor._id}
-                                        className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors"
+                                        className={`hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors ${vendor.status === 'pending' ? 'bg-amber-50/60 dark:bg-amber-950/25 border-l-4 border-amber-500' : ''}`}
                                     >
                                         <td className="p-4 pl-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center text-sm shadow-xs uppercase">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center text-sm shadow-xs uppercase shrink-0">
                                                     {vendor.name ? vendor.name.charAt(0) : "V"}
                                                 </div>
                                                 <div>
-                                                    <div className="font-semibold text-sm text-slate-900 dark:text-white">
-                                                        {vendor.name}
+                                                    <div className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                                        <span>{vendor.name}</span>
+                                                        {vendor.status === 'pending' && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white shadow-xs animate-pulse">
+                                                                ✨ NEW VENDOR
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="text-xs text-slate-500 dark:text-slate-400">
                                                         {vendor.email}

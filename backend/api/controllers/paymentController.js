@@ -66,6 +66,31 @@ const PaymentController = {
 
     async createMintPayPayment(req, res) {
         res.status(200).json({ message: 'Mint Pay integration pending', redirectUrl: 'https://mintpay.lk/sandbox/dummy' });
+    },
+
+    async confirmLocalPayment(req, res) {
+        try {
+            const { bookingId, paymentMethod } = req.body;
+            const booking = await Booking.findById(bookingId);
+            if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+            booking.status = 'confirmed';
+            booking.paymentDetails = {
+                paymentStatus: 'paid',
+                paymentMethod: paymentMethod || booking.paymentMethod || 'bank_transfer',
+                transactionId: `LOCAL_${Date.now()}`
+            };
+            await booking.save();
+
+            if (req.io) {
+                await paymentService.notifyBookingConfirmed(booking, req.io);
+            }
+
+            res.status(200).json({ success: true, booking, message: 'Booking confirmed successfully for local demo' });
+        } catch (error) {
+            console.error('[Local Payment] Error:', error.message);
+            res.status(500).json({ message: error.message });
+        }
     }
 };
 

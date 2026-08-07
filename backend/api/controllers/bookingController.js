@@ -1,10 +1,13 @@
 const BookingService = require('../../services/BookingService');
 const bookingService = new BookingService();
+const invoiceService = require('../../services/InvoiceService');
+const emailService = require('../../services/EmailService');
+const Booking = require('../../database/models/Booking');
 
 const BookingController = {
     async createBooking(req, res) {
         try {
-            const newBooking = await bookingService.createBooking(req.body);
+            const newBooking = await bookingService.createBooking(req.body, req.io);
             res.status(201).json(newBooking);
         } catch (error) {
             console.error('Create booking error:', error.message);
@@ -41,6 +44,17 @@ const BookingController = {
 
     async getVendorBookings(req, res) {
         try {
+            /* ============================================================================
+             * 🎓 VIVA CODE MODIFICATION TASK 6: FULL-STACK API FILTERING (BACKEND + FRONTEND)
+             * ----------------------------------------------------------------------------
+             * If examiner asks: "Fetch filtered data directly from MongoDB using Backend API"
+             * 1. Read query parameters from URL: const { status, category } = req.query;
+             * 2. Build MongoDB query object:
+             *    const filterQuery = {};
+             *    if (status && status !== 'all') filterQuery.status = status;
+             * 3. Pass filterQuery to Mongo: Booking.find(filterQuery)
+             * ============================================================================
+             */
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const result = await bookingService.getVendorBookings(req.user._id, page, limit);
@@ -104,6 +118,66 @@ const BookingController = {
         } catch (error) {
             console.error('Get customers error:', error);
             res.status(500).json({ message: 'Server error' });
+        }
+    },
+
+    async downloadInvoice(req, res) {
+        try {
+            const booking = await Booking.findById(req.params.id)
+                .populate('userId', 'name email phone')
+                .populate('listingId', 'title type description price');
+            if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+            const invNo = booking._id.toString().slice(-8).toUpperCase();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=invoice-${invNo}.pdf`);
+
+            await invoiceService.generateInvoice(booking, res);
+        } catch (error) {
+            console.error('Invoice download error:', error);
+            res.status(500).json({ message: error.message });
+        }
+    },
+
+    async emailInvoice(req, res) {
+        try {
+            const { toEmail } = req.body;
+
+            const booking = await Booking.findById(req.params.id)
+                .populate('userId', 'name email phone')
+                .populate('listingId', 'title type description price');
+            if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+            const recipient = toEmail ||
+                booking.details?.customerEmail ||
+                booking.userId?.email;
+
+            if (!recipient) return res.status(400).json({ message: 'No recipient email found for this booking' });
+
+            const result = await emailService.sendInvoiceEmail(booking, recipient);
+
+            res.status(200).json({
+                success: true,
+                message: result.offline
+                    ? `Invoice saved locally (offline mode). Check backend/email-previews/ folder.`
+                    : `Invoice sent to ${recipient}`,
+                previewUrl: result.previewUrl || null,
+                offline: result.offline || false,
+                localHtmlPath: result.localHtmlPath || null,
+            });
+        } catch (error) {
+            console.error('Email invoice error:', error);
+            res.status(500).json({ message: error.message });
+        }
+    },
+
+    async markAsRead(req, res) {
+        try {
+            const result = await bookingService.markAsRead(req.params.id, req.user.role, req.user._id);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Mark booking as read error:', error);
+            res.status(400).json({ message: error.message });
         }
     }
 };

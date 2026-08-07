@@ -102,12 +102,62 @@ export default function EditListing() {
         }
     };
 
+    const [errors, setErrors] = useState({});
+
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        if (errors[name]) {
+            setErrors({ ...errors, [name]: null });
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        if (!formData.title.trim()) {
+            newErrors.title = 'Title is required';
+        } else if (formData.title.trim().length < 3) {
+            newErrors.title = 'Title must be at least 3 characters';
+        } else if (formData.title.length > 100) {
+            newErrors.title = 'Title cannot exceed 100 characters';
+        }
+
+        if (!formData.description.trim()) {
+            newErrors.description = 'Description is required';
+        } else if (formData.description.trim().length < 10) {
+            newErrors.description = 'Description must be at least 10 characters';
+        } else if (formData.description.length > 1000) {
+            newErrors.description = 'Description cannot exceed 1000 characters';
+        }
+
+        const priceNum = Number(formData.price);
+        if (formData.price === '' || isNaN(priceNum) || priceNum <= 0) {
+            newErrors.price = 'Price must be greater than $0';
+        } else if (priceNum > 1000000) {
+            newErrors.price = 'Price cannot exceed $1,000,000';
+        }
+
+        if (!formData.location.trim()) {
+            newErrors.location = 'Location is required';
+        } else if (formData.location.trim().length < 2) {
+            newErrors.location = 'Location must be at least 2 characters';
+        } else if (formData.location.length > 150) {
+            newErrors.location = 'Location cannot exceed 150 characters';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!validateForm()) {
+            toast.error('Please fix validation errors before saving.');
+            return;
+        }
+
         const currentUserId = user?._id || user?.id;
 
         if (!currentUserId) {
@@ -130,10 +180,13 @@ export default function EditListing() {
 
         const payload = {
             ...formData,
+            title: formData.title.trim(),
+            description: formData.description.trim(),
+            location: formData.location.trim(),
             vendorId: selectedVendorId,
             price: Number(formData.price),
-            amenities: formData.amenities ? formData.amenities.split(',').map(s => s.trim()) : [],
-            features: formData.features ? formData.features.split(',').map(s => s.trim()) : [],
+            amenities: formData.amenities ? formData.amenities.split(',').map(s => s.trim()).filter(Boolean) : [],
+            features: formData.features ? formData.features.split(',').map(s => s.trim()).filter(Boolean) : [],
             capacity: Number(formData.capacity),
             area: Number(formData.area),
             seatLayout: {
@@ -211,18 +264,25 @@ export default function EditListing() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                                        Service Title *
-                                    </label>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                            Service Title *
+                                        </label>
+                                        <span className={`text-xs font-mono font-medium ${formData.title.length >= 90 ? 'text-amber-500 font-bold' : 'text-slate-400'}`}>
+                                            {formData.title.length}/100
+                                        </span>
+                                    </div>
                                     <input
                                         type="text"
                                         name="title"
-                                        className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                        maxLength={100}
+                                        className={`w-full p-3.5 rounded-xl border ${errors.title ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-500'} bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 transition-all`}
                                         onChange={handleChange}
                                         value={formData.title}
                                         required
                                         placeholder="e.g. Grand Luxury Suite"
                                     />
+                                    {errors.title && <p className="mt-1 text-xs text-red-500 font-medium">{errors.title}</p>}
                                 </div>
 
                                 <div>
@@ -245,18 +305,25 @@ export default function EditListing() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                                    Description *
-                                </label>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                        Description *
+                                    </label>
+                                    <span className={`text-xs font-mono font-medium ${formData.description.length >= 900 ? 'text-amber-500 font-bold' : 'text-slate-400'}`}>
+                                        {formData.description.length}/1000
+                                    </span>
+                                </div>
                                 <textarea
                                     name="description"
                                     rows="4"
-                                    className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                    maxLength={1000}
+                                    className={`w-full p-3.5 rounded-xl border ${errors.description ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-500'} bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium text-sm focus:outline-none focus:ring-2 transition-all`}
                                     onChange={handleChange}
                                     value={formData.description}
                                     required
                                     placeholder="Describe your service..."
                                 ></textarea>
+                                {errors.description && <p className="mt-1 text-xs text-red-500 font-medium">{errors.description}</p>}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -267,27 +334,38 @@ export default function EditListing() {
                                     <input
                                         type="number"
                                         name="price"
-                                        className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                        min="0.01"
+                                        max="1000000"
+                                        step="0.01"
+                                        className={`w-full p-3.5 rounded-xl border ${errors.price ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-500'} bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 transition-all`}
                                         onChange={handleChange}
                                         value={formData.price}
                                         required
                                         placeholder="0.00"
                                     />
+                                    {errors.price && <p className="mt-1 text-xs text-red-500 font-medium">{errors.price}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                                        Location *
-                                    </label>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                            Location *
+                                        </label>
+                                        <span className={`text-xs font-mono font-medium ${formData.location.length >= 135 ? 'text-amber-500 font-bold' : 'text-slate-400'}`}>
+                                            {formData.location.length}/150
+                                        </span>
+                                    </div>
                                     <input
                                         type="text"
                                         name="location"
-                                        className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                        maxLength={150}
+                                        className={`w-full p-3.5 rounded-xl border ${errors.location ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-500'} bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 transition-all`}
                                         onChange={handleChange}
                                         value={formData.location}
                                         required
                                         placeholder="City, Country"
                                     />
+                                    {errors.location && <p className="mt-1 text-xs text-red-500 font-medium">{errors.location}</p>}
                                 </div>
                             </div>
 
