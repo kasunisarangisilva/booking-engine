@@ -2,21 +2,58 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({});
     const [error, setError] = useState('');
     const { login } = useAuth();
     const router = useRouter();
 
+    const validateEmail = (val) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!val.trim()) return 'Email address is required';
+        if (!emailRegex.test(val.trim())) return 'Please enter a valid email address';
+        if (val.length > 100) return 'Email cannot exceed 100 characters';
+        return '';
+    };
+
+    const validatePassword = (val) => {
+        if (!val) return 'Password is required';
+        if (val.length < 6) return 'Password must be at least 6 characters';
+        if (val.length > 50) return 'Password cannot exceed 50 characters';
+        return '';
+    };
+
+    const handleEmailChange = (e) => {
+        const val = e.target.value;
+        setEmail(val);
+        setFieldErrors(prev => ({ ...prev, email: validateEmail(val) }));
+    };
+
+    const handlePasswordChange = (e) => {
+        const val = e.target.value;
+        setPassword(val);
+        setFieldErrors(prev => ({ ...prev, password: validatePassword(val) }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        const res = await login(email, password);
+
+        const emailErr = validateEmail(email);
+        const passErr = validatePassword(password);
+        if (emailErr || passErr) {
+            setFieldErrors({ email: emailErr, password: passErr });
+            setError('Please correct input errors before logging in.');
+            return;
+        }
+
+        const res = await login(email.trim(), password);
         if (res.success) {
             toast.success("Login successful!");
             router.push('/');
@@ -34,37 +71,54 @@ export default function Login() {
                         Admin<span className="text-blue-600">Panel</span>
                     </h2>
                     <p className="mt-2 text-center text-sm text-secondary font-medium uppercase tracking-widest">
-                        Sign in to your account
+                        Sign in to your vendor account
                     </p>
                 </div>
                 {error && (
-                    <div className="bg-red-50 border-l-4 border-red-400 p-4 text-red-700 text-sm">
-                        {error}
+                    <div className="bg-red-50 border-l-4 border-red-400 p-4 text-red-700 text-sm rounded flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                        <span>{error}</span>
                     </div>
                 )}
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div className="mb-4">
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+                <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
+                    <div className="rounded-md shadow-sm space-y-4">
+                        <div>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-semibold text-slate-700">Email Address</label>
+                                <span className="text-xs text-slate-400">{email.length}/100</span>
+                            </div>
                             <input
                                 type="email"
                                 required
-                                className="appearance-none relative block w-full px-4 py-3 border border-border placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                maxLength={100}
+                                className={`appearance-none relative block w-full px-4 py-3 border ${
+                                    fieldErrors.email ? 'border-red-500' : 'border-border'
+                                } placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all`}
                                 placeholder="Email address"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={handleEmailChange}
                             />
+                            {fieldErrors.email && (
+                                <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.email}</p>
+                            )}
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-semibold text-slate-700">Password</label>
+                                <span className="text-xs text-slate-400">{password.length}/50</span>
+                            </div>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     required
-                                    className="appearance-none relative block w-full pl-4 pr-10 py-3 border border-border placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                    minLength={6}
+                                    maxLength={50}
+                                    className={`appearance-none relative block w-full pl-4 pr-10 py-3 border ${
+                                        fieldErrors.password ? 'border-red-500' : 'border-border'
+                                    } placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all`}
                                     placeholder="Password"
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={handlePasswordChange}
                                 />
                                 <button
                                     type="button"
@@ -80,6 +134,9 @@ export default function Login() {
                                     )}
                                 </button>
                             </div>
+                            {fieldErrors.password && (
+                                <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.password}</p>
+                            )}
                         </div>
                     </div>
 

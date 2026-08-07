@@ -1,16 +1,42 @@
 const AuthService = require('../../services/AuthService');
 const authService = new AuthService();
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phoneRegex = /^\+?[0-9]{9,15}$/;
+
 const AuthController = {
     async signup(req, res) {
         try {
             const { name, email, password, role, adminSecret, phone } = req.body;
+            
             if (!name || !email || !password || !role) {
-                return res.status(400).json({ message: 'All fields are required' });
+                return res.status(400).json({ message: 'All required fields must be provided' });
+            }
+
+            const cleanName = name.trim();
+            const cleanEmail = email.trim().toLowerCase();
+
+            if (cleanName.length < 2 || cleanName.length > 50) {
+                return res.status(400).json({ message: 'Full name must be between 2 and 50 characters' });
+            }
+
+            if (!emailRegex.test(cleanEmail) || cleanEmail.length > 100) {
+                return res.status(400).json({ message: 'Please provide a valid email address (max 100 characters)' });
+            }
+
+            if (password.length < 6 || password.length > 50) {
+                return res.status(400).json({ message: 'Password must be between 6 and 50 characters' });
+            }
+
+            if (role === 'vendor' && phone) {
+                const cleanPhone = phone.trim();
+                if (!phoneRegex.test(cleanPhone) || cleanPhone.length > 15) {
+                    return res.status(400).json({ message: 'Please provide a valid phone number (9-15 digits)' });
+                }
             }
 
             const result = await authService.signup(
-                { name, email, password, role, phone },
+                { name: cleanName, email: cleanEmail, password, role, phone: phone ? phone.trim() : '' },
                 adminSecret,
                 req.io
             );
@@ -35,7 +61,18 @@ const AuthController = {
     async login(req, res) {
         try {
             const { email, password } = req.body;
-            const result = await authService.login(email, password);
+
+            if (!email || !password) {
+                return res.status(400).json({ message: 'Email and password are required' });
+            }
+
+            const cleanEmail = email.trim().toLowerCase();
+
+            if (!emailRegex.test(cleanEmail)) {
+                return res.status(400).json({ message: 'Please enter a valid email address' });
+            }
+
+            const result = await authService.login(cleanEmail, password);
 
             res.status(200).json({
                 token: result.token,
@@ -75,6 +112,9 @@ const AuthController = {
     async changePassword(req, res) {
         try {
             const { oldPassword, newPassword } = req.body;
+            if (!newPassword || newPassword.length < 6 || newPassword.length > 50) {
+                return res.status(400).json({ message: 'New password must be between 6 and 50 characters' });
+            }
             await authService.changePassword(req.user.id, oldPassword, newPassword);
             res.json({ message: 'Password updated successfully' });
         } catch (error) {

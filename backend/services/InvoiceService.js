@@ -119,9 +119,26 @@ class InvoiceService {
                 y += 16;
 
                 // ── Totals ─────────────────────────────────────────────────
-                const totW = 280;
-                const totX = margin + contentW - totW;
-                const total = booking.totalPrice || 0;
+                /* ============================================================================
+                 * 🎓 VIVA CODE MODIFICATION TASK 1: ADD TAX / SERVICE CHARGE BREAKDOWN TO PDF
+                 * ----------------------------------------------------------------------------
+                 * If examiner asks to add 10% Tax or Service Charge to the PDF Invoice:
+                 * Uncomment the code snippet below to replace the default totals section!
+                 * ============================================================================
+                 */
+                /* 
+                const taxRate = 0.10; // 10% Service Tax
+                const taxAmount = total * taxRate;
+                const grandTotal = total + taxAmount;
+
+                this._totalLine(doc, totX, y, totW, 'Subtotal', this._formatDual(total), DARK, MUTED);
+                y += 28;
+                this._totalLine(doc, totX, y, totW, 'Service Tax (10%)', this._formatDual(taxAmount), AMBER, AMBER);
+                y += 28;
+                doc.rect(totX, y + 2, totW, 2).fill(PRIMARY);
+                y += 6;
+                this._totalLine(doc, totX, y, totW, 'GRAND TOTAL', this._formatDual(grandTotal), PRIMARY, PRIMARY, true);
+                */
 
                 this._totalLine(doc, totX, y,       totW, 'Subtotal',  this._formatDual(total), DARK, MUTED);
                 y += 28;

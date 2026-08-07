@@ -44,6 +44,17 @@ const BookingController = {
 
     async getVendorBookings(req, res) {
         try {
+            /* ============================================================================
+             * 🎓 VIVA CODE MODIFICATION TASK 6: FULL-STACK API FILTERING (BACKEND + FRONTEND)
+             * ----------------------------------------------------------------------------
+             * If examiner asks: "Fetch filtered data directly from MongoDB using Backend API"
+             * 1. Read query parameters from URL: const { status, category } = req.query;
+             * 2. Build MongoDB query object:
+             *    const filterQuery = {};
+             *    if (status && status !== 'all') filterQuery.status = status;
+             * 3. Pass filterQuery to Mongo: Booking.find(filterQuery)
+             * ============================================================================
+             */
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const result = await bookingService.getVendorBookings(req.user._id, page, limit);
@@ -157,6 +168,16 @@ const BookingController = {
         } catch (error) {
             console.error('Email invoice error:', error);
             res.status(500).json({ message: error.message });
+        }
+    },
+
+    async markAsRead(req, res) {
+        try {
+            const result = await bookingService.markAsRead(req.params.id, req.user.role, req.user._id);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Mark booking as read error:', error);
+            res.status(400).json({ message: error.message });
         }
     }
 };

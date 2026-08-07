@@ -12,6 +12,7 @@ router.get('/:id', protect, bookingController.getBookingById);
 router.get('/:id/invoice', protect, bookingController.downloadInvoice);
 router.post('/:id/email-invoice', protect, bookingController.emailInvoice);
 router.put('/:id', protect, bookingController.updateBooking);
+router.put('/:id/read', protect, bookingController.markAsRead);
 router.put('/:id/cancel', protect, bookingController.cancelBooking);
 router.delete('/:id', protect, bookingController.deleteBooking);
 

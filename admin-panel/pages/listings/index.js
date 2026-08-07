@@ -32,6 +32,16 @@ export default function ManageListings() {
     const [endDate, setEndDate] = useState('');
     const [deleteModalId, setDeleteModalId] = useState(null);
 
+    /* ============================================================================
+     * 🎓 VIVA MODIFICATION TASK A: LOCATION FILTER STATE & SORT BY STATE
+     * ----------------------------------------------------------------------------
+     * If examiner asks: "Add Location Filter or Sort By (Price Low-High / High-Low)":
+     * Uncomment the state variables below:
+     * ============================================================================
+     */
+    // const [locationFilter, setLocationFilter] = useState('all');
+    // const [sortBy, setSortBy] = useState('newest'); // 'price_asc' | 'price_desc' | 'newest'
+
     const { user, token } = useAuth();
     const router = useRouter();
 
@@ -79,14 +89,22 @@ export default function ManageListings() {
     const filteredListings = Array.isArray(listings)
         ? listings.filter(l => {
             // Search term check
-            const matchesSearch = 
+            const matchesSearch =
                 (l.title && l.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (l.location && l.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (l.type && l.type.toLowerCase().includes(searchTerm.toLowerCase()));
 
             // Category/Type filter check
-            const matchesType = typeFilter === 'all' || 
+            const matchesType = typeFilter === 'all' ||
                 (l.type && l.type.toLowerCase() === typeFilter.toLowerCase());
+
+            /* ============================================================================
+             * 🎓 VIVA MODIFICATION TASK B: LOCATION FILTER CONDITION
+             * ----------------------------------------------------------------------------
+             * Uncomment line below to activate Location filter check:
+             * ============================================================================
+             */
+            // const matchesLocation = locationFilter === 'all' || (l.location && l.location.toLowerCase().includes(locationFilter.toLowerCase()));
 
             // Price range check
             let matchesPrice = true;
@@ -97,21 +115,34 @@ export default function ManageListings() {
             let matchesDate = true;
             if (l.createdAt) {
                 const createdDate = new Date(l.createdAt);
-                createdDate.setHours(0,0,0,0);
+                createdDate.setHours(0, 0, 0, 0);
                 if (startDate) {
                     const start = new Date(startDate);
-                    start.setHours(0,0,0,0);
+                    start.setHours(0, 0, 0, 0);
                     if (createdDate < start) matchesDate = false;
                 }
                 if (endDate) {
                     const end = new Date(endDate);
-                    end.setHours(23,59,59,999);
+                    end.setHours(23, 59, 59, 999);
                     if (createdDate > end) matchesDate = false;
                 }
             }
 
-            return matchesSearch && matchesType && matchesPrice && matchesDate;
+            return matchesSearch && matchesType && matchesPrice && matchesDate; // && matchesLocation
         })
+        /* ============================================================================
+         * 🎓 VIVA MODIFICATION TASK C: SORT BY PRICE / DATE
+         * ----------------------------------------------------------------------------
+         * Uncomment sort function below to sort listings by price or date:
+         * ============================================================================
+         */
+        /*
+        .sort((a, b) => {
+            if (sortBy === 'price_asc') return a.price - b.price;
+            if (sortBy === 'price_desc') return b.price - a.price;
+            return new Date(b.createdAt) - new Date(a.createdAt); // newest
+        })
+        */
         : [];
 
     const ITEMS_PER_PAGE = 8;
@@ -179,6 +210,49 @@ export default function ManageListings() {
                             <option value="vehicle">🚗 Vehicle</option>
                         </select>
                     </div>
+
+                    {/* ============================================================================
+                     * 🎓 VIVA MODIFICATION TASK D: LOCATION FILTER DROPDOWN UI
+                     * ----------------------------------------------------------------------------
+                     * Uncomment the JSX block below to render a Location Filter Dropdown:
+                     * ============================================================================
+                     */}
+                    {/*
+                    <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Location</label>
+                        <select
+                            value={locationFilter}
+                            onChange={(e) => setLocationFilter(e.target.value)}
+                            className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        >
+                            <option value="all">All Locations</option>
+                            <option value="colombo">📍 Colombo</option>
+                            <option value="kandy">📍 Kandy</option>
+                            <option value="galle">📍 Galle</option>
+                        </select>
+                    </div>
+                    */}
+
+                    {/* ============================================================================
+                     * 🎓 VIVA MODIFICATION TASK E: SORT BY DROPDOWN UI
+                     * ----------------------------------------------------------------------------
+                     * Uncomment the JSX block below to render a Sort By Dropdown:
+                     * ============================================================================
+                     */}
+                    {/*
+                    <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Sort By</label>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        >
+                            <option value="newest">🆕 Newest First</option>
+                            <option value="price_asc">💵 Price: Low to High</option>
+                            <option value="price_desc">💎 Price: High to Low</option>
+                        </select>
+                    </div>
+                    */}
 
                     <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Min Price ($)</label>

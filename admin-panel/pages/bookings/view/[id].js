@@ -35,6 +35,13 @@ export default function ViewBooking() {
             const b = res.data;
             setEmailTo(b.details?.customerEmail || b.userId?.email || '');
             setLoading(false);
+
+            // Automatically mark as read/seen if unread
+            if (!b.isRead) {
+                axios.put(`${API_BASE}/bookings/${id}/read`, {}, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }).catch(e => console.warn('Failed to mark booking as read', e));
+            }
         } catch (err) {
             console.error('Error fetching booking:', err);
             toast.error('Failed to load booking details');

@@ -42,6 +42,10 @@ const bookingSchema = new mongoose.Schema({
     phone: {
         type: String,
         trim: true
+    },
+    isRead: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

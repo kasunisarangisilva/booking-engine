@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import AdminLayout from '../../components/AdminLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import { toast } from 'react-hot-toast';
 import {
     Eye,
@@ -36,12 +37,31 @@ export default function ViewBookings() {
     const [deleteModalId, setDeleteModalId] = useState(null);
 
     const { user, token } = useAuth();
+    const { lastBookingEvent } = useNotification();
 
     useEffect(() => {
         if (user?._id) {
             fetchBookings();
         }
     }, [user]);
+
+    useEffect(() => {
+        if (lastBookingEvent) {
+            fetchBookings();
+        }
+    }, [lastBookingEvent]);
+
+    const handleMarkAsRead = async (id, e) => {
+        if (e) e.stopPropagation();
+        try {
+            setBookings(prev => prev.map(b => b._id === id ? { ...b, isRead: true } : b));
+            await axios.put(`${API_BASE}/bookings/${id}/read`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch (err) {
+            console.error('Error marking booking as read', err);
+        }
+    };
 
     const fetchBookings = async () => {
         setLoading(true);
@@ -331,6 +351,16 @@ export default function ViewBookings() {
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse min-w-200">
                         <thead>
+                            {/* ============================================================================
+                             * 🎓 VIVA CODE MODIFICATION TASK 2: ADD CUSTOMER PHONE COLUMN & SEARCH FILTER
+                             * ----------------------------------------------------------------------------
+                             * If examiner asks to add Customer Phone Number column to Bookings table:
+                             * 1. Add <th className="p-4">Customer Phone</th> in <thead> below.
+                             * 2. Add <td className="p-4 text-xs font-semibold text-slate-700">{b.phone || b.details?.customerPhone || 'N/A'}</td> in <tbody>.
+                             * 3. In filteredBookings, add search by phone:
+                             *    (b.phone && b.phone.includes(searchTerm)) || (b.details?.customerPhone && b.details.customerPhone.includes(searchTerm))
+                             * ============================================================================
+                             */}
                             <tr className="border-b border-slate-200 dark:border-slate-700 text-left bg-slate-50/50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
                                 <th className="p-4 pl-6">Guest Details</th>
                                 <th className="p-4">Listing</th>
@@ -358,15 +388,24 @@ export default function ViewBookings() {
                                     </tr>
                                 ))
                                 : paginatedBookings.map(b => (
-                                    <tr key={b._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
+                                    <tr key={b._id} className={`hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors ${!b.isRead ? 'bg-emerald-50/60 dark:bg-emerald-950/25 border-l-4 border-emerald-500' : ''}`}>
                                         <td className="p-4 pl-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 text-white font-bold flex items-center justify-center text-sm shadow-xs uppercase">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 text-white font-bold flex items-center justify-center text-sm shadow-xs uppercase shrink-0">
                                                     {b.userId?.name ? b.userId.name.charAt(0) : "G"}
                                                 </div>
                                                 <div>
-                                                    <div className="font-semibold text-sm text-slate-900 dark:text-white">
-                                                        {b.userId?.name || b.details?.customerName || 'Guest User'}
+                                                    <div className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                                        <span>{b.userId?.name || b.details?.customerName || 'Guest User'}</span>
+                                                        {!b.isRead && (
+                                                            <button
+                                                                onClick={(e) => handleMarkAsRead(b._id, e)}
+                                                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500 text-white shadow-xs animate-pulse hover:bg-emerald-600 transition-all cursor-pointer border-0"
+                                                                title="New booking - click to mark as seen"
+                                                            >
+                                                                ✨ NEW
+                                                            </button>
+                                                        )}
                                                     </div>
                                                     <div className="text-xs text-slate-500 dark:text-slate-400">
                                                         {isGuestEmail(b.userId?.email)
@@ -404,6 +443,7 @@ export default function ViewBookings() {
                                             <div className="flex items-center gap-2 justify-end">
                                                 <Link
                                                     href={`/bookings/view/${b._id}`}
+                                                    onClick={() => handleMarkAsRead(b._id)}
                                                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 transition-all no-underline shadow-2xs"
                                                 >
                                                     <Eye className="w-3.5 h-3.5" /> View

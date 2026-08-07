@@ -13,6 +13,7 @@ export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [lastBookingEvent, setLastBookingEvent] = useState(null);
 
     // Fetch notifications from API
     const fetchNotifications = async () => {
@@ -69,6 +70,10 @@ export const NotificationProvider = ({ children }) => {
 
         socket.on('notification', (data) => {
             console.log('[Socket] Received notification:', data);
+
+            if (data.type === 'new_booking' || data.type === 'booking_confirmed' || data.data?.bookingId || data.data?._id) {
+                setLastBookingEvent(data);
+            }
 
             setNotifications(prev => {
                 const notifId = data._id || data.id;
@@ -167,6 +172,7 @@ export const NotificationProvider = ({ children }) => {
         <NotificationContext.Provider value={{
             notifications,
             unreadCount,
+            lastBookingEvent,
             isDrawerOpen,
             openDrawer,
             closeDrawer,
