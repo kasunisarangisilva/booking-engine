@@ -93,7 +93,7 @@ class BookingService {
     }
 
     /* ============================================================================
-     * 🎓 VIVA CODE MODIFICATION TASK 4: SORT BOOKINGS BY PRICE / DATE IN BACKEND API
+     * 🎓 VI@ TASK 4: SORT BOOKINGS BY PRICE / DATE IN BACKEND API
      * ----------------------------------------------------------------------------
      * If examiner asks to sort bookings by price (high to low / low to high) or status:
      * Modify Mongo query sort option inside BookingRepository or BookingService:
@@ -130,7 +130,7 @@ class BookingService {
 
     async updateBooking(id, updateData, userRole, userId) {
         const booking = await this.getBookingById(id);
-        
+
         // Authorization check (Admin can edit any, Vendor can edit their own listing's bookings)
         if (userRole === 'vendor') {
             if (booking.listingId.vendorId.toString() !== userId.toString()) {
@@ -143,13 +143,13 @@ class BookingService {
         // Avoid changing status through general update
         delete updateData.status;
         delete updateData.cancellationReason;
-        
+
         return await this.bookingRepo.update(id, updateData);
     }
 
     async cancelBooking(id, reason, userRole, userId) {
         const booking = await this.getBookingById(id);
-        
+
         // Authorization check
         if (userRole === 'vendor') {
             if (booking.listingId.vendorId.toString() !== userId.toString()) {
@@ -173,7 +173,7 @@ class BookingService {
 
     async deleteBooking(id, userRole, userId) {
         const booking = await this.getBookingById(id);
-        
+
         // Authorization check
         if (userRole === 'vendor') {
             if (booking.listingId.vendorId.toString() !== userId.toString()) {

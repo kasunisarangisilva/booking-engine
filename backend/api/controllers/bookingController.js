@@ -45,7 +45,7 @@ const BookingController = {
     async getVendorBookings(req, res) {
         try {
             /* ============================================================================
-             * 🎓 VIVA CODE MODIFICATION TASK 6: FULL-STACK API FILTERING (BACKEND + FRONTEND)
+             * 🎓 VI@ TASK 6: FULL-STACK API FILTERING (BACKEND + FRONTEND)
              * ----------------------------------------------------------------------------
              * If examiner asks: "Fetch filtered data directly from MongoDB using Backend API"
              * 1. Read query parameters from URL: const { status, category } = req.query;

@@ -137,27 +137,27 @@ export default function Vendors() {
     const filteredVendors = Array.isArray(vendors)
         ? vendors.filter((v) => {
             // Search term check
-            const matchesSearch = 
+            const matchesSearch =
                 v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 v.email.toLowerCase().includes(searchTerm.toLowerCase());
 
             // Status filter check
-            const matchesStatus = statusFilter === 'all' || 
+            const matchesStatus = statusFilter === 'all' ||
                 (v.status && v.status.toLowerCase() === statusFilter.toLowerCase());
 
             // Date joined check
             let matchesDate = true;
             if (v.createdAt) {
                 const createdDate = new Date(v.createdAt);
-                createdDate.setHours(0,0,0,0);
+                createdDate.setHours(0, 0, 0, 0);
                 if (startDate) {
                     const start = new Date(startDate);
-                    start.setHours(0,0,0,0);
+                    start.setHours(0, 0, 0, 0);
                     if (createdDate < start) matchesDate = false;
                 }
                 if (endDate) {
                     const end = new Date(endDate);
-                    end.setHours(23,59,59,999);
+                    end.setHours(23, 59, 59, 999);
                     if (createdDate > end) matchesDate = false;
                 }
             }
@@ -294,7 +294,7 @@ export default function Vendors() {
                     <table className="w-full border-collapse min-w-200">
                         <thead>
                             {/* ============================================================================
-                             * 🎓 VIVA CODE MODIFICATION TASK 3: ADD VENDOR PHONE COLUMN & STATUS FILTER
+                             * 🎓 VI@ TASK 3: ADD VENDOR PHONE COLUMN & STATUS FILTER
                              * ----------------------------------------------------------------------------
                              * If examiner asks to add Vendor Phone Column or extra Vendor Type Filter:
                              * 1. Add <th className="p-4">Phone Number</th> to <thead> below.

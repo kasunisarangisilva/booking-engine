@@ -119,7 +119,7 @@ export default function StepPayment({ formData, updateFormData }) {
                     </div>
 
                     {/* ============================================================================
-                     * 🎓 VIVA CODE MODIFICATION TASK 5: ADD PROMO CODE / DISCOUNT CODE FIELD
+                     * 🎓 VI@ TASK 5: ADD PROMO CODE / DISCOUNT CODE FIELD
                      * ----------------------------------------------------------------------------
                      * If examiner asks to add a Discount / Promo Code field in checkout UI:
                      * Uncomment the JSX block below to render a live promo code input field!

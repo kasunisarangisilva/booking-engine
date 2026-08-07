@@ -165,7 +165,7 @@ export default function ViewBookings() {
 
     const ITEMS_PER_PAGE = 8;
     const localTotalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE) || 1;
-    
+
     // Ensure current page doesn't exceed total pages
     const currentPage = page > localTotalPages ? 1 : page;
     const paginatedBookings = filteredBookings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -352,7 +352,7 @@ export default function ViewBookings() {
                     <table className="w-full border-collapse min-w-200">
                         <thead>
                             {/* ============================================================================
-                             * 🎓 VIVA CODE MODIFICATION TASK 2: ADD CUSTOMER PHONE COLUMN & SEARCH FILTER
+                             * 🎓 VI@ TASK 2: ADD CUSTOMER PHONE COLUMN & SEARCH FILTER
                              * ----------------------------------------------------------------------------
                              * If examiner asks to add Customer Phone Number column to Bookings table:
                              * 1. Add <th className="p-4">Customer Phone</th> in <thead> below.

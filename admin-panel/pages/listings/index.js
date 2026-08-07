@@ -33,7 +33,7 @@ export default function ManageListings() {
     const [deleteModalId, setDeleteModalId] = useState(null);
 
     /* ============================================================================
-     * 🎓 VIVA MODIFICATION TASK A: LOCATION FILTER STATE & SORT BY STATE
+     * 🎓 VI@ TASK A: LOCATION FILTER STATE & SORT BY STATE
      * ----------------------------------------------------------------------------
      * If examiner asks: "Add Location Filter or Sort By (Price Low-High / High-Low)":
      * Uncomment the state variables below:
@@ -99,7 +99,7 @@ export default function ManageListings() {
                 (l.type && l.type.toLowerCase() === typeFilter.toLowerCase());
 
             /* ============================================================================
-             * 🎓 VIVA MODIFICATION TASK B: LOCATION FILTER CONDITION
+             * 🎓 VI@ TASK B: LOCATION FILTER CONDITION
              * ----------------------------------------------------------------------------
              * Uncomment line below to activate Location filter check:
              * ============================================================================
@@ -131,7 +131,7 @@ export default function ManageListings() {
             return matchesSearch && matchesType && matchesPrice && matchesDate; // && matchesLocation
         })
         /* ============================================================================
-         * 🎓 VIVA MODIFICATION TASK C: SORT BY PRICE / DATE
+         * 🎓VI@ TASK C: SORT BY PRICE / DATE
          * ----------------------------------------------------------------------------
          * Uncomment sort function below to sort listings by price or date:
          * ============================================================================
@@ -212,7 +212,7 @@ export default function ManageListings() {
                     </div>
 
                     {/* ============================================================================
-                     * 🎓 VIVA MODIFICATION TASK D: LOCATION FILTER DROPDOWN UI
+                     * 🎓 VI@ TASK D: LOCATION FILTER DROPDOWN UI
                      * ----------------------------------------------------------------------------
                      * Uncomment the JSX block below to render a Location Filter Dropdown:
                      * ============================================================================
@@ -234,7 +234,7 @@ export default function ManageListings() {
                     */}
 
                     {/* ============================================================================
-                     * 🎓 VIVA MODIFICATION TASK E: SORT BY DROPDOWN UI
+                     * 🎓 VI@ TASK E: SORT BY DROPDOWN UI
                      * ----------------------------------------------------------------------------
                      * Uncomment the JSX block below to render a Sort By Dropdown:
                      * ============================================================================
